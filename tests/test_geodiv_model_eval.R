@@ -7,7 +7,7 @@
 #
 
 
-source('../sdm_enviro_vars.R')
+source('../geodiv_model_eval.R')
 library(testthat)
 
 
