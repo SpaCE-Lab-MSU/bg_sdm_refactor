@@ -1,0 +1,8 @@
+renv
+renv.lock
+*.Rproj
+.Renviron
+.Rhistory
+.Rproj.user
+.Rprofile
+drafts
