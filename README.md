@@ -6,6 +6,14 @@ The original code is from Beth Gerstner's GeoDiv repository : https://github.com
 
 The file `geodiv_model_eval.R` is a refactor of [chapter_1 test_model_evaluation.R](https://github.com/bgerstner90/geodiv/blob/master/chapter_1/rcode/test_model_evaluation.R#L91)
 
+### Status
+
+- The data reading and processing functions are working independent of species and tested
+- start on documentation (this readme)
+- the main model run function is written but untested
+- needs to be adapted to accept different radii
+- main function to set the species, the radius and run all the steps needs to be written and tested
+
 ### Requirements
 
 #### **Java **
