@@ -45,9 +45,21 @@ double click the MSI to install it
 
 **HPCC:**  Java is installed on the HPCC and RJava is also installed with several of the versions of R, vesion 4.0.2 for sure. 
 
+#### **GEOS** 
+
+The raster manipulation package `terra` and the maxent model require spatial libs to be installed on your machine
+
+Terra says it requires:  C++11, GDAL (>= 2.2.3), GEOS (>= 3.4.0), PROJ (>= 4.9.3), sqlite3
+
+- On Mac, again use homebrew:  `brew install geos gdal proj`. (sqlite is already on mac)
+- On the MSU HPCC, these are already installed but must match your R version (4.0.2 works)
+- Windows... ?
+
 #### **R Libs:** This script requires the following R libs to be installed: 
 
  - rJava
+ - terra (formerly raster) (which requires sp and OS-level libraries)
+ - sf
  - dismo
  - [ENMeval](https://jamiemkass.github.io/ENMeval/index.html)
  - wallace
@@ -85,6 +97,9 @@ To run the model code you must
     1. if mounted on your computer use /Volumes/plz-lab/DATA/bg_geodiversity or ? for PC
 1. Restart R if necessary to re-read the changes in `.Renviron`
 
+
+### Testing
+
 There are unit tests for functions in the `/tests` folder.  To run the tests : 
 
 
@@ -93,4 +108,15 @@ There are unit tests for functions in the `/tests` folder.  To run the tests :
 1. in the R console, use `testthat::test_file('tests/test_geodiv_model_eval.R')` or in Rstudio, open the file [tests/test_geodiv_model_eval.R] and click 'run tests' at the top. 
 1. if the data files are not accessible to the program there will many errors
 
+To do a test run of the model, the `testthat` package doesn't work so great (it hides the output ), but there is a test script to try.  It's a bit ragged for will using the model run function, save data, and see if the CSVs have rows of data in them:
+
+```R
+source('geodiv_model_eval.R')
+source('tests/test_model_run.R')
+```
+
+this will additionalling save the output from the model in an Rdata file for re-reading into R
+
+The output files of the test script are save to a temp folder that is removed when you quit R/Rstudio
+    
 
