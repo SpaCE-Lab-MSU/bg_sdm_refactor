@@ -59,12 +59,15 @@ Test that you can use Java properly in R
 
 In the R console: 
 
-```R  
+```R 
+install.packages('rJava')
 requireNamespace('rJava')
 # should be no error
 rJava::.jpackage('dismo')
 # also no error message. 
 ```
+
+Once R is working, you need to copy the `maxent.jar` program to a place where the dismo package can find it.   According to the post above, the folder can be found using R 
 
 To run the model code you must
 
@@ -73,9 +76,9 @@ To run the model code you must
    install.packages('renv')
    renv::init()
    ```
-1. copy the file `maxent.jar` to the place it needs to be.  Make sure dismo is installed first and Java is working
-    1. find the folder where dismo uses for Java.  In the R console use the command `system.file("java", package="dismo")`
-    1. copy the file `maxent.jar` (out of the zip file if necessary) to the folder list above.  You can copy/paste the folder into windows explorer bar or using the mac terminal
+1. copy the file `maxent.jar` to the place it needs to be.  Make sure dismo is installed first and Java is working (see above)
+    1. find the folder where dismo uses for Java.  In the R console use the command `system.file("java", package="dismo")` - for me on the HPCC that will show `[1] "/mnt/ufs18/home-107/billspat/R/4.0.2-GCC-8.3.0/dismo/java"`
+    1. Using the command line or a file manager (outside of R), copy the file `maxent.jar` (out of the zip file if necessary) to the folder show above.  You can copy/paste the folder into windows explorer bar or using the mac terminal
 1. get the CHELSA and pre-thinned rasters files accessible to your computer ( currently on ) 
 1. edit the file `.Renviron` and change the path for the 'base_path' to match where the data is
     1. current location on the MSU HPCC is /mnt/research/plz-lab/DATA/bg_geodiversity
