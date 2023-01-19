@@ -234,38 +234,38 @@ run_model <- function(occs, envs, species, partitioning_alg = 'randomkfold'){
 }
 
 #' write components of ENMevaluation to disk
-save_model <- function(emx, species, radiusKm, run_number, outputPath){
+save_model <- function(e.mx, species, radiusKm, run_number, outputPath){
 
-    emx.results <- emx@results
+    e.mx.results <- e.mx@results
     # "a_palliata_ENMeval_1x_results.1.run1.csv"
     results.Filename = paste0(species, "_ENMeval_1x_results.",radiusKm,".run.",run_number,".csv")
-    write.csv(emx.results, file=file.path(outputPath, results.Filename))
+    write.csv(e.mx.results, file=file.path(outputPath, results.Filename))
 
     # minimize AICc
     # evaluated the AICc within 2 delta units
-    minAIC <- emx.results[which(emx.results$delta.AICc <= 2),] #Make sure the column is delta.AICc
+    minAIC <- e.mx.results[which(e.mx.results$delta.AICc <= 2),] #Make sure the column is delta.AICc
     minAIC.Filename <- paste0(species, "_min_AIC_em.x.", radiusKm, "_run",run_number,".csv")
     # NOTE this file name is changed from original model_evaluation script to accommodate radius and run number
     write.csv(minAIC,file=file.path(outputPath, minAIC.Filename))
 
 
     #Generate table of performance stats
-    emx.stats <- emx.results[c("auc.train","cbi.train")]
+    e.mx.stats <- e.mx.results[c("auc.train","cbi.train")]
     stats.Filename <- paste0(species, "_stats_e.mx.",radiusKm, "_run", run_number,".csv")
     # "a_palliata_stats_e.mx.1_run1.csv"
-    write.csv(emx.stats, file.path(outputPath, stats.Filename))
+    write.csv(e.mx.stats, file.path(outputPath, stats.Filename))
 
 
     # variable importance table
-    emx.var.imp <-emx@variable.importance$fc.LQHP_rm.1
+    e.mx.var.imp <-e.mx@variable.importance$fc.LQHP_rm.1
     #"a_palliata_permutation_imp_e.mx.1.run1.csv"
     varimp.Filename <- paste0(species, "_imp_e.mx.",radiusKm, "_run", run_number,".csv")
 
-    write.csv(emx.var.imp, file = file.path(outputPath, varimp.Filename))
+    write.csv(e.mx.var.imp, file = file.path(outputPath, varimp.Filename))
 
     #write prediction to file
     # filename="e.mx.1.pred.run1.tif"
     prediction.Filename = paste0(species, "_pred_e.mx.",radiusKm, "_run", run_number,".csv")
-    writeRaster(emx@predictions$fc.LQHP_rm.1, filename=file.path(outputPath, prediction.Filename), format="GTiff", overwrite=T)
+    writeRaster(e.mx@predictions$fc.LQHP_rm.1, filename=file.path(outputPath, prediction.Filename), format="GTiff", overwrite=T)
 
 }
