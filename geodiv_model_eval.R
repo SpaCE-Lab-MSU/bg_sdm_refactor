@@ -8,29 +8,25 @@
 # Authors: Beth E. Gerstner, Pat Bills
 # versions
 # 3/21/22: original script https://github.com/bgerstner90/geodiv/blob/master/chapter_1/rcode/test_model_evaluation.R
-# 1/21/23
+# 1/21/19: nearly complete WIP.  adapted to use correct data folder, but wallace can't read occs
 
-#Load in libraries - TODO change these to 'require()'
-library(spocc) # https://github.com/ropensci/spocc
-library(spThin) # https://cran.r-project.org/web/packages/spThin/index.html
-# library(dismo)
-# library(rgeos)
-library(raster)
-library(ENMeval)
-library(wallace)
+## uses the following environment variables - set these in your .Renviron file
+# SDM_BASE_PATH path to where the data lives, with subfolders for species occs and rasters
+# alternatively if SDM_BASE_PATH is not set, HPCC_BASE_PATH will be used
+# SDM_ENVS_PATH sub path inside SDM_BASE_PATH where the env rasters are
+
+
+trailingOnly= FALSE
+# ensure libs are available 
+require(raster)
+require(ENMeval) 
+require(wallace)
 
 options(java.parameters = c("-XX:+UseConcMarkSweepGC", "-Xmx8192m"))
 
-# library(xlsx)
 
-# global default configuration.  Override these if you don't want to set vars when you run the program
-# move these to Renviron
-HPCC_BASE_PATH="/mnt/research/plz-lab/DATA/bg_geodiversity"
-DATA_BASE_PATH="/Volumes/plz-lab/DATA/bg_geodiversity"
-# candidate_species_2022/thinned_data  CHELSA_4_only
-EXAMPLE_SPECIES="Alouatta_palliata"
-RADII = c(1,3,9,15,21,27,33)
-
+TEST_SPECIES="Alouatta_palliata"
+TEST_RADIUS=1
 
 # get or set the global configuration for the base path so you don't have to send it to functions everytime
 # side effect: sets env variable if a parameter is sent
@@ -44,14 +40,16 @@ sdmBasePath <- function(base_path = NULL){
         return(base_path )
     } else {
         # 2. no var sent, so read environment
-        base_path <- Sys.getenv('BASE_PATH')
+        base_path <- Sys.getenv('SDM_BASE_PATH')
     }
 
-    # 3
+    # 3 if this base path is not set, check if we are on the HPCC
+    # this allows you to have a single .Renviron with a 'local' var and an HPCC path
     if(base_path == "") {
         if(Sys.getenv("HPCC_CLUSTER_FLAVOR") != "") {
-            base_path = HPCC_BASE_PATH
+            base_path = Sys.getenv('HPCC_BASE_PATH')
         } else {
+            # if parameter null, no environment variable set, use current dir
             base_path = "."
         }
 
@@ -62,67 +60,135 @@ sdmBasePath <- function(base_path = NULL){
 }
 
 
-# thinned data example
-
-# /Volumes/plz-lab/DATA/bg_geodiversity/candidate_species_2022/thinned_data/Alouatta_palliata_thinned_full
-# Alouatta_palliata_thinned_thin1.csv
-# Alouatta_palliata_thinned_thin2.csv
-# Alouatta_palliata_thinned_thin3.csv
-# Alouatta_palliata_thinned_thin4.csv
-# Alouatta_palliata_thinned_thin5.csv
 
 # Point Values run (CHELSA + remote sensing)
-occsDataPath <- function(species,base_path = sdmBasePath() ) {
-    full_data_path = paste0(species,"_thinned_full")
-    return(file.path(base_path, "candidate_species_2022","thinned_data", full_data_path))
+#' function to allow flexibility in locating occurrence data
+#' based on where the data currently lives
+occsDataPath <- function(species, occsSubDirSuffix = "_thinned_full", sdmOccsPath = NULL, basePath = sdmBasePath() ) {
+  
+  # current location of data (1/23) is 
+  # basePath + occurrence_records/Alouatta_palliata_thinned_full
+  # basePath + occs dir + species dir
+
+  if( is.null(sdmOccsPath)) {
+      sdmOccsPath = Sys.getenv('SDM_OCCS_PATH')
+  }
+  
+  speciesSubDir = paste0(species,occsSubDirSuffix)
+    
+  occsFullPath = file.path(basePath, sdmOccsPath,speciesSubDir)   
+  if(file.exists(occsFullPath)) {
+    return(occsFullPath)
+  } else { 
+    warning(paste("occurence data folder not found, returning NULL ",occsFullPath))
+    return(NULL)            
+  }
+  
 }
 
-# standardized data file naming - simply prepend species name to filename
-occsDataFilename <- function(species, suffix = "_thinned_thin1.csv"){
-    return(paste0(species, suffix))
+
+occsDataFilename<-function(species,suffix = "_thinned_thin1.csv"){
+  return(paste0(species, suffix))
+  
+}
+#' standardized occurrence data file naming per-species
+#' to allow future flexibility in finding these files
+#' simply cmnbine species name and suffix and current datapath
+#' override dataPath param to customize
+#' returns NULL if the path as constructed is not found. 
+#' does not check if the data file is valid
+occsDataFilePath <- function(species, dataPath = NULL, suffix=NULL ){
+  # if optional params are not sent get the standard path
+  if(is.null(dataPath)) { dataPath = occsDataPath(species) }
+  if(is.null(suffix)) {
+    fn<- occsDataFilename(species)
+  } else {
+    fn<- occsDataFilename(species,suffix)
+  }
+  
+  # example of currently used file name is Alouatta_palliata_thinned_thin1.csv
+  fp <- file.path(dataPath, fn)
+  
+  if(file.exists(fp)){
+    return(fp)
+  } else {
+    warning(paste("occurence filenot found, returning NULL ",fp))
+    return(NULL)
+  }
 }
 
-#' create polygon for the region used by this study, named for the id
-#'
-#' rather than store the ID of the polygon in a different data structure, set the R 'name'
-#' value: 2 X n matrix representing pairs of decimal coordinates  (lat, long),
-#' named for the ID of the poly
-region_polygon <- function(){
-     p<- matrix(c(-86.444047, -80.905157, -73.915607, -74.39916, -78.839064, -83.85044, -88.334303, -87.76283, -86.444047, 14.76522, 14.254698, 11.254812, 4.117319, -6.150488, -4.487817, 8.962027, 13.657628, 14.76522), ncol = 2, byrow = FALSE)
-     names(p)<- 5373
-     return(p)
+
+# TODO remove this after testing updated function
+#' #' get standard path for CHELSA data
+#' set_envs_dir <- function(base_path = sdmBasePath()) {
+#'     p <- Sys.getenv("SDM_ENVS_PATH")
+#'     # this is the working folder as of 11/22, update as needed
+#'     if( p == "" ) { p <-  "CHELSA_4_only"}
+#'     p <- file.path(base_path, p)
+#'     return(p)
+#' }
+
+
+#' standardized way to construct path to data given radius
+envsDataPath <- function(radius = 1, suffix = "x", sdmEnvsDir = NULL, basePath = sdmBasePath()){
+  # current location 1/23 is  base path + /environmental_variables/33x/<tiffs>
+  if(is.null(sdmEnvsDir)) {
+    # if no param sent, use value set in .Renviron or in OS environment
+    sdmEnvsDir = Sys.getenv('SDM_ENVS_PATH')
+  } 
+  
+  
+  dp <- file.path(basePath, sdmEnvsDir, paste0(sprintf("%d", radius), suffix))
+  return(dp)
 }
+  
 
-#' get standard path for CHELSA data
-set_envs_dir <- function(base_path = sdmBasePath()) {
-    p <- Sys.getenv("CHELSA_PATH")
-    if( p == "" ) { p <-  "CHELSA_4_only"}
-    p <- file.path(base_path, p)
-    return(p)
-}
+#' read in ennvironment rasters for a given radius
+#' envsDir path to rasters, or NULL if want to use standard path
+#' to construct data path different from standard, 
+#'  use envsDir =  envsDataPath(radius, suffix, sdmEnvsDir, bathPath)
 
-read_envs <- function(envs_dir = set_envs_dir()){
+read_envs <- function(radius, envsDir = NULL){
 
+    if(is.null(envsDir)){
+      envsDir = envsDataPath(radius)
+    }
+  
+    if(!file.exists(envsDir)){
+      warning(paste("path to envs not found, returning null:", envsDir))
+      return(NULL)
+    }
+  
+    
     # NOTE for reference, the current list is c('srtm_crop.tif', 'bio6_1981.2010_V.2.1.tif', 'bio5_1981.2010_V.2.1.tif', 'bio14_1981.2010_V.2.1.tif', 'bio13_1981.2010_V.2.1.tif',"cloud_crop.tif")
     # but here we get the list of file nanmes by reading the names from given folder, which makes it more flexible
-    envs_raster_names <-  list.files(envs_dir)
+    patternTifFile = ".+\\.tif[f]?"  # regular expression matches *.tif and *.tiff
+    # get list of all the tiffs in the folder
+    envs_raster_names <-  list.files(envsDir, patternTifFile )
+    
+    # make sure there are files there
+    if(length(envs_raster_names) == 0){
+      warning(paste("no tif files found in", envsDir, "returning NULL"))
+      return(NULL)
+    }
 
     envs <- wallace::envs_userEnvs(
-        rasPath = file.path(envs_dir, envs_raster_names),
+        rasPath = file.path(envsDir, envs_raster_names),
         rasName = envs_raster_names,
         doBrick = FALSE)
-
+    
+    return(envs)
 }
 
 
 read_occs <-function(species){
-    # questionL for txt name why use the file name (a..p..thined ) vs just the species per Wallace documentation https://rdrr.io/cran/wallace/man/occs_userOccs.html
+    #questionL for txt name why use the file name (a..p..thined ) vs just the species per Wallace documentation https://rdrr.io/cran/wallace/man/occs_userOccs.html
     #occs_path <- "/Volumes/BETH'S DRIV/zarnetske_lab/candidate_species_2022/thinned_data/Alouatta_palliata_thinned_full"
     #occs_path <- file.path(occs_path, "Alouatta_palliata_thinned_thin1.csv")
 
     # https://rdrr.io/cran/wallace/man/occs_userOccs.html
     userOccs_sp <- wallace::occs_userOccs(
-        txtPath = file.path(occsDataPath(species), occsDataFilename(species)),
+        txtPath = occsDataFilePath(species),
         txtName = occsDataFilename(species),
         txtSep = ",",
         txtDec = ".")
@@ -130,16 +196,8 @@ read_occs <-function(species){
     return(userOccs_sp[[species]]$cleaned)
 }
 
-# Query selected database for occurrence records. These have been pre-thinned by 10km.
-process_occs <- function(occs, envs, poly_matrix) {
-
-    if(!is.null(names(poly_matrix))){
-        poly_id = names(poly_matrix)[1]
-    } else {
-        warning("polygon parameter does not have an id. use names() to set the id")
-        return(NULL)
-    }
-
+#' read in pre-queries (and pre-thinned) occurence records
+process_occs <- function(occs, envs) {
 
     occs_xy <- occs[c('longitude', 'latitude')]
     occs_vals <- as.data.frame(raster::extract(envs, occs_xy, cellnumbers = TRUE))
@@ -150,23 +208,30 @@ process_occs <- function(occs, envs, poly_matrix) {
     # add columns for env variable values for each occurrence record
     occs <- cbind(occs_2, occs_vals_2)
 
+    return(occs)
 
+}
+
+#' remove points outside of species sampling polygon
+#' sometimes for some data points are mislabeled, this removes them
+#' for current project data is good, so this function is not used. 
+filter_occs <-function(occs,areaPoly,polyID){
     #Remove occurrences outside of user drawn polygon
-    #NOTE if there are no values to remove, poccs_selectOccs() returns NULL!!!
     occs_or_null <- wallace::poccs_selectOccs(
         occs = occs,
-        polySelXY = poly_matrix,
-        polySelID = poly_id
+        polySelXY = areaPoly,
+        polySelID = polyID
     )
 
+    #NOTE if there are no values to remove, poccs_selectOccs() returns NULL!!!
     if(is.null(occs_or_null)){
         return(occs)
     } else {
         return(occs_or_null)
     }
 
-
 }
+
 #' background sampling calculations
 #' Sampling of 10000 background points and corresponding environmental data using a “point buffers” method with a 1 degree buffer.
 #'
@@ -209,14 +274,20 @@ bg_sampling <- function(occs, envs, species){
 }
 
 #' gather params, create bg sample and create ENM Evaluation
-run_model <- function(occs, envs, species, partitioning_alg = 'randomkfold'){
+run_model <- function(occs, envs, species){
 
-
-    # check param is compatible with ENMeval
-    if( ! (partitioning_alg %in% c("randomkfold", "jackknife", "block", "checkerboard1", "checkerboard2", "testing", "none"))) {
-        warning(paste("partioning_alg param value", partitioning_alg, "is not an option for ENMevaluate, exiting"))
-        return()
-    }
+  # TOO make this work
+  n_occs <- nrow(occs)
+  partitioning_cutoff <- 20 # TODO- from beth
+  if (noccs < cutoff) {
+    partitioning_alg = 'jackknife'
+  } else {
+    partitioning_alg = 'randomkfold'
+  }
+  
+  # TO DO set fc base on n_occs
+  feature_class = c("LQHP")
+  
 
     bgData <- bg_sampling(occs, envs, species)
     #generate full prediction extent for input into 'envs'
@@ -227,9 +298,11 @@ run_model <- function(occs, envs, species, partitioning_alg = 'randomkfold'){
     ##RUN 1
     #Need to use Maxent.jar because of the ability to see perm importance
     #will have to store maxent jar file on HPC? Maxent uses this file to run.
+    
+    #TODO set model 
     e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
                           algorithm = 'maxent.jar', partitions = partitioning_alg,
-                          tune.args = list(fc = c("LQHP"), rm = 1))
+                          tune.args = list(fc = feature_class, rm = 1))
 
     return(e.mx)
 }
@@ -273,13 +346,15 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
 
 }
 
-run_species_radius <- function(species, radiusKm = 1, runNumber = 1, outputPath = NULL){
+run_species_radius <- function(species, areaPoly, radiusKm = 1, runNumber = 1, outputPath = NULL){
   message(paste("running model for ", species, "radius=", radiusKm, " run number=", runNumber ))
   
   # read environmental rasters
   envs <- read_envs()
   # read occurrences
   occs <- read_occs(species)
+  occs <- process_occs(occs, envs, areaPoly)
+    
   # run model
   e.mx <- run_model(occs, envs, species, partitioning_alg = 'randomkfold')
   
@@ -292,3 +367,5 @@ run_species_radius <- function(species, radiusKm = 1, runNumber = 1, outputPath 
   return(e.mx)
 
 }
+
+
