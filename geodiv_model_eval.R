@@ -16,11 +16,12 @@
 # SDM_ENVS_PATH sub path inside SDM_BASE_PATH where the env rasters are
 
 
-trailingOnly= FALSE
 # ensure libs are available 
 require(raster)
 require(ENMeval) 
 require(wallace)
+require(rJava)
+require(dismo)
 
 options(java.parameters = c("-XX:+UseConcMarkSweepGC", "-Xmx8192m"))
 
