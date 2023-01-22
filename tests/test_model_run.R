@@ -13,9 +13,8 @@
 test_model_run <- function() {
   TEST_SPECIES <- "Alouatta_palliata"
   TEST_RADIUS  <- 1
-
   
-  test.e.mx <- run_species_radius(species=EXAMPLE_SPECIES, radiusKm = TEST_RADIUS, runNumber = 1, outputPath = NULL)
+  test.e.mx <- run_species_radius(species=TEST_SPECIES, radiusKm = TEST_RADIUS, runNumber = 1, outputPath = NULL)
   print("test results:")
   print(test.e.mx@results)
   
