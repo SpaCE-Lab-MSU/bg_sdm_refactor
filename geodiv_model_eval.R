@@ -87,25 +87,34 @@ occsDataPath <- function(species, occsSubDirSuffix = "_thinned_full", sdmOccsPat
   
 }
 
-
-occsDataFilename<-function(species,suffix = NULL){
+#' very simple function to conbine species and a suffice into a file name. 
+occsDataFilename<-function(species,occsFileSuffix  = NULL){
   
-  if(is.null(suffix)) suffix = "_thinned_thin1.csv"
+  if(is.null(occsFileSuffix )) 
+    { occsFileSuffix  = "_thinned_thin1.csv" }
+  else {
+    if(grep("\\.csv$", occsFileSuffix) == 0) {
+        # add the file extension to the suffix if not there.  
+        # this makes it flex for caller not to have to remember
+        occsFileSuffix = paste0(occsFileSuffix, ".csv")
+    }
+  }
   
-  return(paste0(species, suffix))
+  return(paste0(species, occsFileSuffix ))
   
 }
+
 #' standardized occurrence data file naming per-species
 #' to allow future flexibility in finding these files
 #' simply cmnbine species name and suffix and current datapath
 #' override dataPath param to customize
 #' returns NULL if the path as constructed is not found. 
 #' does not check if the data file is valid
-occsDataFilePath <- function(species, dataPath = NULL, occsSubDirSuffix = NULL, fileSuffix = NULL ){
+occsDataFilePath <- function(species, dataPath = NULL, occsSubDirSuffix = NULL, occsFileSuffix  = NULL ){
   # if optional params are not sent get the standard path
   if(is.null(dataPath)) { dataPath = occsDataPath(species,occsSubDirSuffix) }
   
-  fileName<- occsDataFilename(species,fileSuffix)
+  fileName<- occsDataFilename(species,occsFileSuffix )
 
   
   # example of currently used file name is Alouatta_palliata_thinned_thin1.csv
@@ -197,7 +206,7 @@ read_occs <-function(species,occsSubDirSuffix = NULL, occsFileSuffix = NULL, sdm
 
     # https://rdrr.io/cran/wallace/man/occs_userOccs.html
     userOccs_sp <- wallace::occs_userOccs(
-        txtPath = occsDataFilePath(species),
+        txtPath = occsDataFilePath(species,ocssSubDirSuffix, occsFileSuffix),
         txtName = occsDataFilename(species,suffix=occsFileSuffix),
         txtSep = ",",
         txtDec = ".")
@@ -285,18 +294,37 @@ bg_sampling <- function(occs, envs, species){
 #' gather params, create bg sample and create ENM Evaluation
 run_model <- function(occs, envs, species){
 
-  # TOO make this work
   n_occs <- nrow(occs)
-  partitioning_cutoff <- 20 # TODO- from beth
-  if (noccs < cutoff) {
-    partitioning_alg = 'jackknife'
-  } else {
-    partitioning_alg = 'randomkfold'
-  }
   
-  # TO DO set fc base on n_occs
-  feature_class = c("LQHP")
+  # Model parameters based on occurrence record #s
+  # Conditional settings for feature classes
+  # LQH >= 15
+  # LQ between 10 -14
+  # L < 10
+  # 
   
+  
+  featureClass = c("L")
+  
+  if(n_occs > 10 ){ featureClass <- c(featureClass, "Q") }
+  
+  if(n_occs >=15 ){ featureClass <- c(featureClass, "H") }
+    
+  
+  # 
+  # Conditional settings for cross validation
+  # Jackknife for <= 25
+  # Random K-fold > 25
+  
+  
+    partitioning_cutoff <- 25 
+  
+    if (noccs <= cutoff) {  
+        partitioning_alg <- 'jackknife'   } 
+    else {                  
+        partitioning_alg <- 'randomkfold' }
+  
+
 
     bgData <- bg_sampling(occs, envs, species)
     #generate full prediction extent for input into 'envs'
@@ -308,10 +336,10 @@ run_model <- function(occs, envs, species){
     #Need to use Maxent.jar because of the ability to see perm importance
     #will have to store maxent jar file on HPC? Maxent uses this file to run.
     
-    #TODO set model 
+    print(paste("running ENMevaluate n=",n_occs, "feature class", fc, " partitions", partitioning_alg))
     e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
                           algorithm = 'maxent.jar', partitions = partitioning_alg,
-                          tune.args = list(fc = feature_class, rm = 1))
+                          tune.args = list(fc = featureClass, rm = 1))
 
     return(e.mx)
 }
@@ -355,14 +383,15 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
 
 }
 
-run_species_radius <- function(species, areaPoly, radiusKm = 1, runNumber = 1, outputPath = NULL){
+sdm_read_and_run <- function(species, areaPoly, radiusKm = 1, runNumber = 1, envsDir = NULL, occsSubDirSuffix = NULL, occsFileSuffix = NULL, outputPath = NULL){
   message(paste("running model for ", species, "radius=", radiusKm, " run number=", runNumber ))
   
   # read environmental rasters
-  envs <- read_envs()
-  # read occurrences
-  occs <- read_occs(species)
-  occs <- process_occs(occs, envs, areaPoly)
+  envs <- read_envs(radius = radiusKm, envsDir = envsDir)
+
+  # read and process occurrences
+  occs <- read_occs(species,occsSubDirSuffix, occsFileSuffix)
+  occs <- process_occs(occs, envs)
     
   # run model
   e.mx <- run_model(occs, envs, species, partitioning_alg = 'randomkfold')
