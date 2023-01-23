@@ -88,7 +88,10 @@ occsDataPath <- function(species, occsSubDirSuffix = "_thinned_full", sdmOccsPat
 }
 
 
-occsDataFilename<-function(species,suffix = "_thinned_thin1.csv"){
+occsDataFilename<-function(species,suffix = NULL){
+  
+  if(is.null(suffix)) suffix = "_thinned_thin1.csv"
+  
   return(paste0(species, suffix))
   
 }
@@ -98,17 +101,15 @@ occsDataFilename<-function(species,suffix = "_thinned_thin1.csv"){
 #' override dataPath param to customize
 #' returns NULL if the path as constructed is not found. 
 #' does not check if the data file is valid
-occsDataFilePath <- function(species, dataPath = NULL, suffix=NULL ){
+occsDataFilePath <- function(species, dataPath = NULL, occsSubDirSuffix = NULL, fileSuffix = NULL ){
   # if optional params are not sent get the standard path
-  if(is.null(dataPath)) { dataPath = occsDataPath(species) }
-  if(is.null(suffix)) {
-    fn<- occsDataFilename(species)
-  } else {
-    fn<- occsDataFilename(species,suffix)
-  }
+  if(is.null(dataPath)) { dataPath = occsDataPath(species,occsSubDirSuffix) }
+  
+  fileName<- occsDataFilename(species,fileSuffix)
+
   
   # example of currently used file name is Alouatta_palliata_thinned_thin1.csv
-  fp <- file.path(dataPath, fn)
+  fp <- file.path(dataPath, fileName)
   
   if(file.exists(fp)){
     return(fp)
@@ -182,15 +183,22 @@ read_envs <- function(radius, envsDir = NULL){
 }
 
 
-read_occs <-function(species){
+#TODO add params to account for file location and naming for flexibility
+read_occs <-function(species,occsSubDirSuffix = NULL, occsFileSuffix = NULL, sdmOccsPath = NULL,basePath = sdmBasePath()){
     #questionL for txt name why use the file name (a..p..thined ) vs just the species per Wallace documentation https://rdrr.io/cran/wallace/man/occs_userOccs.html
     #occs_path <- "/Volumes/BETH'S DRIV/zarnetske_lab/candidate_species_2022/thinned_data/Alouatta_palliata_thinned_full"
     #occs_path <- file.path(occs_path, "Alouatta_palliata_thinned_thin1.csv")
 
+    # 
+    # occsDataFilename(species,suffix=occsFileSuffix)
+    # occsDataFilePath <- function(species, 
+          # dataPath = occsDataPath(species, occsSubDirSuffix, sdmOccsPath, basePath), 
+          # suffix=occsFileSuffix )
+
     # https://rdrr.io/cran/wallace/man/occs_userOccs.html
     userOccs_sp <- wallace::occs_userOccs(
         txtPath = occsDataFilePath(species),
-        txtName = occsDataFilename(species),
+        txtName = occsDataFilename(species,suffix=occsFileSuffix),
         txtSep = ",",
         txtDec = ".")
 
