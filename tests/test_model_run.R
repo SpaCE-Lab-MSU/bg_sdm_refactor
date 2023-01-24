@@ -14,7 +14,8 @@ test_model_run <- function() {
   TEST_SPECIES <- "Alouatta_palliata"
   TEST_RADIUS  <- 1
   
-  test.e.mx <- run_species_radius(species=TEST_SPECIES, radiusKm = TEST_RADIUS, runNumber = 1, outputPath = NULL)
+  # run test, but assume all paths are set via Renviron
+  test.e.mx <- sdm_read_and_run(species=TEST_SPECIES, radiusKm = TEST_RADIUS, runNumber = 1, outputPath = NULL)
   print("test results:")
   print(test.e.mx@results)
   
@@ -28,7 +29,7 @@ test_model_run <- function() {
   print('saving data to')
   print(TEST_OUTPUT_PATH)
   
-  another.test.e.mx <- save_model(test.e.mx, species=EXAMPLE_SPECIES, radiusKm = TEST_RADIUS, runNumber =1 , outputPath = TEST_OUTPUT_PATH )
+  another.test.e.mx <- save_model(test.e.mx, species=TEST_SPECIES, radiusKm = TEST_RADIUS, runNumber =1 , outputPath = TEST_OUTPUT_PATH )
 
   # get a list of the files in this tmp directory, which will only have output from this run. 
   # test there are ANY that have CSV extension *
