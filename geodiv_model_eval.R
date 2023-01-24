@@ -188,7 +188,7 @@ read_occs <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, 
 }
 
 
-#' read in pre-queries (and pre-thinned) occurence records
+#' read in pre-queries (and pre-thinned) occurrence records
 process_occs <- function(occs, envs) {
 
     occs_xy <- occs[c('longitude', 'latitude')]
@@ -343,18 +343,31 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
     write.csv(e.mx.stats, file.path(outputPath, stats.Filename))
 
 
-    # variable importance table
-    e.mx.var.imp <-e.mx@variable.importance$fc.LQHP_rm.1
-    #"a_palliata_permutation_imp_e.mx.1.run1.csv"
-    varimp.Filename <- paste0(species, "_imp_e.mx.",radiusKm, "_run", runNumber,".csv")
+    # TODO : FIX 
+    
+    # previous code didn't work because there is not a list item with this name
+    # e.mx.var.imp <-e.mx@variable.importance$fc.LQHP_rm.1 --> #"a_palliata_permutation_imp_e.mx.1.run1.csv"
+    # variable importance table, names are fc.Q_rm.1, fc.H_rm.1, etc.  there is no fc.LQHP_rm.1
+    # loop through the fc names and save each as a CSV
+    for(fcName in names(e.mx@variable.importance)) {
+      varimp.Filename <- paste0(species, "_imp_e.mx_", fcName, "_",radiusKm, "_run", runNumber,".csv")  
+      write.csv(e.mx@variable.importance[[fcName]], file = file.path(outputPath, varimp.Filename))
+    }
+    
 
-    write.csv(e.mx.var.imp, file = file.path(outputPath, varimp.Filename))
+    
 
     #write prediction to file
     # filename="e.mx.1.pred.run1.tif"
-    prediction.Filename = paste0(species, "_pred_e.mx.",radiusKm, "_run", runNumber,".csv")
-    writeRaster(e.mx@predictions$fc.LQHP_rm.1, filename=file.path(outputPath, prediction.Filename), format="GTiff", overwrite=T)
-
+  
+    # loop through the fc names of the layers and save each as a raster
+    for(layerName in names(e.mx@predictions)) {
+      prediction.Filename = paste0(species, "_pred_",layerName, "_", radiusKm, "_run", runNumber,".csv")  
+      writeRaster(e.mx@predictions[[layerName]], filename=file.path(outputPath, prediction.Filename), format="GTiff", overwrite=T)
+    }  
+    
+  
+    
 }
 
 # sdm_read_and_run <- function(species, areaPoly, radiusKm = 1, runNumber = 1, envsDir = NULL,outputPath = NULL){
