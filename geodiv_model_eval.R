@@ -62,15 +62,17 @@ sdmBasePath <- function(base_path = NULL){
 
 
 #' standardized way to construct path to data given radius
-envsDataPath <- function(radius = 1, suffix = "x", sdmEnvsDir = NULL, basePath = sdmBasePath()){
+#' this will ALWAYS be <base_path>/SDM_ENVS_PATH/<radius>x>
+#' 
+envsDataPath <- function(radius = 1, suffix = "x", envsDir = NULL, basePath = sdmBasePath()){
   # current location 1/23 is  base path + /environmental_variables/33x/<tiffs>
-  if(is.null(sdmEnvsDir)) {
+  if(is.null(envsDir)) {
     # if no param sent, use value set in .Renviron or in OS environment
-    sdmEnvsDir = Sys.getenv('SDM_ENVS_PATH')
+    envsDir = Sys.getenv('SDM_ENVS_PATH')
   } 
   
   
-  dp <- file.path(basePath, sdmEnvsDir, paste0(sprintf("%d", radius), suffix))
+  dp <- file.path(basePath, envsDir, paste0(sprintf("%d", radius), suffix))
   return(dp)
 }
   
@@ -78,13 +80,12 @@ envsDataPath <- function(radius = 1, suffix = "x", sdmEnvsDir = NULL, basePath =
 #' read in ennvironment rasters for a given radius
 #' envsDir path to rasters, or NULL if want to use standard path
 #' to construct data path different from standard, 
-#'  use envsDir =  envsDataPath(radius, suffix, sdmEnvsDir, bathPath)
+#'  use envsDir =  envsDataPath(radius, suffix, envsDir, bathPath)
 
 read_envs <- function(radius, envsDir = NULL){
-
-    if(is.null(envsDir)){
-      envsDir = envsDataPath(radius)
-    }
+    
+    envsDir = envsDataPath(radius, envsDir = envsDir)
+    
   
     if(!file.exists(envsDir)){
       warning(paste("path to envs not found, returning null:", envsDir))
@@ -117,95 +118,95 @@ read_envs <- function(radius, envsDir = NULL){
 # Point Values run (CHELSA + remote sensing)
 #' function to allow flexibility in locating occurrence data
 #' based on where the data currently lives
-occsDataPath <- function(species, occsSubDirSuffix = "_thinned_full", sdmOccsPath = NULL, basePath = sdmBasePath() ) {
-  
-  # current location of data (1/23) is 
-  # basePath + occurrence_records/Alouatta_palliata_thinned_full
-  # basePath + occs dir + species dir
-  
-  if( is.null(sdmOccsPath)) {
-    sdmOccsPath = Sys.getenv('SDM_OCCS_PATH')
-  }
-  
-  speciesSubDir = paste0(species,occsSubDirSuffix)
-  
-  occsFullPath = file.path(basePath, sdmOccsPath,speciesSubDir)   
-  if(file.exists(occsFullPath)) {
-    return(occsFullPath)
-  } else { 
-    warning(paste("occurence data folder not found, returning NULL ",occsFullPath))
-    return(NULL)            
-  }
-  
-}
-
-
-#' very simple function to conbine species and a suffice into a file name. 
-occsDataFilename<-function(species,occsFileSuffix  = NULL){
-  
-  if(is.null(occsFileSuffix )) 
-  { occsFileSuffix  = "_thinned_thin1.csv" }
-  else {
-    if(grep("\\.csv$", occsFileSuffix) == 0) {
-      # add the file extension to the suffix if not there.  
-      # this makes it flex for caller not to have to remember
-      occsFileSuffix = paste0(occsFileSuffix, ".csv")
-    }
-  }
-  
-  return(paste0(species, occsFileSuffix ))
-  
-}
-
-#' standardized occurrence data file naming per-species
-#' to allow future flexibility in finding these files
-#' simply cmnbine species name and suffix and current datapath
-#' override dataPath param to customize
-#' returns NULL if the path as constructed is not found. 
-#' does not check if the data file is valid
-occsDataFilePath <- function(species, dataPath = NULL, occsSubDirSuffix = NULL, occsFileSuffix  = NULL ){
-  # if optional params are not sent get the standard path
-  if(is.null(dataPath)) { dataPath = occsDataPath(species,occsSubDirSuffix) }
-  
-  fileName<- occsDataFilename(species,occsFileSuffix )
-  
-  
-  # example of currently used file name is Alouatta_palliata_thinned_thin1.csv
-  fp <- file.path(dataPath, fileName)
-  
-  if(file.exists(fp)){
-    return(fp)
-  } else {
-    warning(paste("occurence filenot found, returning NULL ",fp))
-    return(NULL)
-  }
-}
-
-
-# TODO remove this after testing updated function
-#' #' get standard path for CHELSA data
-#' set_envs_dir <- function(base_path = sdmBasePath()) {
-#'     p <- Sys.getenv("SDM_ENVS_PATH")
-#'     # this is the working folder as of 11/22, update as needed
-#'     if( p == "" ) { p <-  "CHELSA_4_only"}
-#'     p <- file.path(base_path, p)
-#'     return(p)
+#' occsDataPath <- function(species, occsSubDirSuffix = "_thinned_full", sdmOccsPath = NULL, basePath = sdmBasePath() ) {
+#'   
+#'   # current location of data (1/23) is 
+#'   # basePath + occurrence_records/Alouatta_palliata_thinned_full
+#'   # basePath + occs dir + species dir
+#'   
+#'   if( is.null(sdmOccsPath)) {
+#'     sdmOccsPath = Sys.getenv('SDM_OCCS_PATH')
+#'   }
+#'   
+#'   speciesSubDir = paste0(species,occsSubDirSuffix)
+#'   
+#'   occsFullPath = file.path(basePath, sdmOccsPath,speciesSubDir)   
+#'   if(file.exists(occsFullPath)) {
+#'     return(occsFullPath)
+#'   } else { 
+#'     warning(paste("occurence data folder not found, returning NULL ",occsFullPath))
+#'     return(NULL)            
+#'   }
+#'   
 #' }
-#TODO add params to account for file location and naming for flexibility
-read_occs <-function(species,occsSubDirSuffix = NULL, occsFileSuffix = NULL, sdmOccsPath = NULL,basePath = sdmBasePath()){
-  #questionL for txt name why use the file name (a..p..thined ) vs just the species per Wallace documentation https://rdrr.io/cran/wallace/man/occs_userOccs.html
-  #occs_path <- "/Volumes/BETH'S DRIV/zarnetske_lab/candidate_species_2022/thinned_data/Alouatta_palliata_thinned_full"
-  #occs_path <- file.path(occs_path, "Alouatta_palliata_thinned_thin1.csv")
-  
-  # https://rdrr.io/cran/wallace/man/occs_userOccs.html
-  userOccs_sp <- wallace::occs_userOccs(
-    txtPath = occsDataFilePath(species,ocssSubDirSuffix, occsFileSuffix),
-    txtName = occsDataFilename(species,suffix=occsFileSuffix),
-    txtSep = ",",
-    txtDec = ".")
-  
-  return(userOccs_sp[[species]]$cleaned)
-}
+#' 
+#' 
+#' #' very simple function to conbine species and a suffice into a file name. 
+#' occsDataFilename<-function(species,occsFileSuffix  = NULL){
+#'   
+#'   if(is.null(occsFileSuffix )) 
+#'   { occsFileSuffix  = "_thinned_thin1.csv" }
+#'   else {
+#'     if(grep("\\.csv$", occsFileSuffix) == 0) {
+#'       # add the file extension to the suffix if not there.  
+#'       # this makes it flex for caller not to have to remember
+#'       occsFileSuffix = paste0(occsFileSuffix, ".csv")
+#'     }
+#'   }
+#'   
+#'   return(paste0(species, occsFileSuffix ))
+#'   
+#' }
+#' 
+#' #' standardized occurrence data file naming per-species
+#' #' to allow future flexibility in finding these files
+#' #' simply cmnbine species name and suffix and current datapath
+#' #' override dataPath param to customize
+#' #' returns NULL if the path as constructed is not found. 
+#' #' does not check if the data file is valid
+#' occsDataFilePath <- function(species, dataPath = NULL, occsSubDirSuffix = NULL, occsFileSuffix  = NULL ){
+#'   # if optional params are not sent get the standard path
+#'   if(is.null(dataPath)) { dataPath = occsDataPath(species,occsSubDirSuffix) }
+#'   
+#'   fileName<- occsDataFilename(species,occsFileSuffix )
+#'   
+#'   
+#'   # example of currently used file name is Alouatta_palliata_thinned_thin1.csv
+#'   fp <- file.path(dataPath, fileName)
+#'   
+#'   if(file.exists(fp)){
+#'     return(fp)
+#'   } else {
+#'     warning(paste("occurence filenot found, returning NULL ",fp))
+#'     return(NULL)
+#'   }
+#' }
+#' 
+#' 
+#' # TODO remove this after testing updated function
+#' #' #' get standard path for CHELSA data
+#' #' set_envs_dir <- function(base_path = sdmBasePath()) {
+#' #'     p <- Sys.getenv("SDM_ENVS_PATH")
+#' #'     # this is the working folder as of 11/22, update as needed
+#' #'     if( p == "" ) { p <-  "CHELSA_4_only"}
+#' #'     p <- file.path(base_path, p)
+#' #'     return(p)
+#' #' }
+#' #TODO add params to account for file location and naming for flexibility
+#' read_occs <-function(species,occsSubDirSuffix = NULL, occsFileSuffix = NULL, sdmOccsPath = NULL,basePath = sdmBasePath()){
+#'   #questionL for txt name why use the file name (a..p..thined ) vs just the species per Wallace documentation https://rdrr.io/cran/wallace/man/occs_userOccs.html
+#'   #occs_path <- "/Volumes/BETH'S DRIV/zarnetske_lab/candidate_species_2022/thinned_data/Alouatta_palliata_thinned_full"
+#'   #occs_path <- file.path(occs_path, "Alouatta_palliata_thinned_thin1.csv")
+#'   
+#'   # https://rdrr.io/cran/wallace/man/occs_userOccs.html
+#'   userOccs_sp <- wallace::occs_userOccs(
+#'     txtPath = occsDataFilePath(species,ocssSubDirSuffix, occsFileSuffix),
+#'     txtName = occsDataFilename(species,suffix=occsFileSuffix),
+#'     txtSep = ",",
+#'     txtDec = ".")
+#'   
+#'   return(userOccs_sp[[species]]$cleaned)
+#' }
 
 #======V2 occs
 
@@ -473,14 +474,15 @@ sdm_read_and_run <- function(species, areaPoly, radiusKm = 1, runNumber = 1, env
 
 }
 
-sdm_read_and_run_v2 <- function(species, areaPoly, radiusKm = 1, runNumber = 1, envsPathTemplate = NULL, occsPathTemplate = NULL, outputPath = NULL){
+sdm_read_and_run_V2 <- function(species, radiusKm = 1, runNumber = 1, basePath = NULL, envsDir = NULL, occsPathTemplate = NULL, outputPath = NULL){
   message(paste("running model for ", species, "radius=", radiusKm, " run number=", runNumber ))
   
+  basePath = sdmBasePath(basePath)
   # read environmental rasters
   envs <- read_envs(radius = radiusKm, envsDir = envsDir)
   
   # read and process occurrences
-  occs <- read_occs(species,occsSubDirSuffix, occsFileSuffix)
+  occs <- read_occs(species)
   occs <- process_occs(occs, envs)
   
   # run model
