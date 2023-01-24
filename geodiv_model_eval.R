@@ -210,7 +210,7 @@ read_envs <- function(radius, envsDir = NULL){
 
 #======V2 occs
 
-occsDataPath_V2 <- function(species, occsPathTemplate = NULL, basePath = sdmBasePath() ) {
+occsDataPath <- function(species, occsPathTemplate = NULL, basePath = sdmBasePath() ) {
   
   # current location of data (1/23) is 
   # basePath + occurrence_records/Alouatta_palliata_thinned_full
@@ -249,7 +249,7 @@ occsDataPath_V2 <- function(species, occsPathTemplate = NULL, basePath = sdmBase
 #' construct file name for occurrences file given template 
 #' 
 #' wallace needs both the full path and the file name to open 
-occsDataFilename_V2<-function(species,occsFileNameTemplate  = NULL){
+occsDataFilename<-function(species,occsFileNameTemplate  = NULL){
   
   if(is.null(occsFileNameTemplate )) 
   {  occsFileNameTemplate  = Sys.getenv('SDM_OCCS_FILE_TEMPLATE')}
@@ -265,15 +265,18 @@ occsDataFilename_V2<-function(species,occsFileNameTemplate  = NULL){
   
 }
 
-read_occs_V2 <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, basePath = sdmBasePath()){
+read_occs <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, basePath = NULL){
   #questionL for txt name why use the file name (a..p..thined ) vs just the species per Wallace documentation https://rdrr.io/cran/wallace/man/occs_userOccs.html
   #occs_path <- "/Volumes/BETH'S DRIV/zarnetske_lab/candidate_species_2022/thinned_data/Alouatta_palliata_thinned_full"
   #occs_path <- file.path(occs_path, "Alouatta_palliata_thinned_thin1.csv")
   
+  # TODO - leave this to the other functions? 
+  if(is.null(basePath)) { basePath = sdmBasePath() }
+  
   # https://rdrr.io/cran/wallace/man/occs_userOccs.html
   userOccs_sp <- wallace::occs_userOccs(
-    txtPath = file.path(occsDataPath_V2(species, occsPathTemplate, basePath = basePath),occsDataFilename_V2(species,occsFileNameTemplate)),
-    txtName = occsDataFilename_V2(species,occsFileNameTemplate),
+    txtPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),occsDataFilename(species,occsFileNameTemplate)),
+    txtName = occsDataFilename(species,occsFileNameTemplate),
     txtSep = ",",
     txtDec = ".")
   
@@ -458,7 +461,7 @@ sdm_read_and_run <- function(species, areaPoly, radiusKm = 1, runNumber = 1, env
 
 
   # read and process occurrences
-  occs <- read_occs_V2(species)
+  occs <- read_occs(species)
   occs <- process_occs(occs, envs)
     
   # run model
@@ -474,7 +477,7 @@ sdm_read_and_run <- function(species, areaPoly, radiusKm = 1, runNumber = 1, env
 
 }
 
-sdm_read_and_run_V2 <- function(species, radiusKm = 1, runNumber = 1, basePath = NULL, envsDir = NULL, occsPathTemplate = NULL, outputPath = NULL){
+sdm_read_and_run <- function(species, radiusKm = 1, runNumber = 1, basePath = NULL, envsDir = NULL, occsPathTemplate = NULL, occsFileNameTemplate = NLL, outputPath = NULL){
   message(paste("running model for ", species, "radius=", radiusKm, " run number=", runNumber ))
   
   basePath = sdmBasePath(basePath)
@@ -482,7 +485,10 @@ sdm_read_and_run_V2 <- function(species, radiusKm = 1, runNumber = 1, basePath =
   envs <- read_envs(radius = radiusKm, envsDir = envsDir)
   
   # read and process occurrences
-  occs <- read_occs(species)
+  occs <- read_occs(species, 
+                       occsPathTemplate, 
+                       occsFileNameTemplate,
+                       basePath)
   occs <- process_occs(occs, envs)
   
   # run model

@@ -36,9 +36,9 @@ test_that("sdmBasePath creates a path", {
 # })
 
 testthat::test_that("can find occs dir and file",{
-  occs_path<- occsDataPath_V2(TEST_SPECIES)
+  occs_path<- occsDataPath(TEST_SPECIES)
   expect_true(file.exists(occs_path))
-  fname <- occsDataFilename_V2(TEST_SPECIES)
+  fname <- occsDataFilename(TEST_SPECIES)
   expect_true(file.exists(file.path(occs_path, fname)))
   
 })
@@ -46,7 +46,7 @@ testthat::test_that("can find occs dir and file",{
 test_that("can read species occurence data", {
 
     # requires access to directory where occurrence data is
-    occ <- read_occs_V2(TEST_SPECIES)
+    occ <- read_occs(TEST_SPECIES)
     expect_true(typeof(occ)=="list")
     expect_true(nrow(occ) > 0 )
     expect_true("occID" %in% names(occ))
@@ -67,7 +67,7 @@ test_that("can read envs file",{
 
 
 test_that("can process occurrence data", {
-    occs <- read_occs_V2(TEST_SPECIES)
+    occs <- read_occs(TEST_SPECIES)
     envs <- read_envs(TEST_RADIUS)
     processed_occs <- process_occs(occs, envs=envs)
 
