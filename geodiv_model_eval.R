@@ -277,13 +277,18 @@ run_model <- function(occs, envs, species){
   # L < 10
   # 
   
-  
-  featureClass = c("L")
-  
-  if(n_occs > 10 ){ featureClass <- c(featureClass, "Q") }
-  
-  if(n_occs >=15 ){ featureClass <- c(featureClass, "H") }
+
+  # feature classes as vector (array)  
+  # featureClass = c("L")
+  # 
+  # if(n_occs > 10 ){ featureClass <- c(featureClass, "Q") }
+  # 
+  # if(n_occs >=15 ){ featureClass <- c(featureClass, "H") }
     
+  # feature class as string of letters
+  featureClass = "L"
+  if(n_occs > 10 ){ featureClass <- paste0(featureClass, "Q") }
+  if(n_occs >=15 ){ featureClass <- paste0(featureClass, "H") }
   
   # 
   # Conditional settings for cross validation
@@ -310,7 +315,7 @@ run_model <- function(occs, envs, species){
     #Need to use Maxent.jar because of the ability to see perm importance
     #will have to store maxent jar file on HPC? Maxent uses this file to run.
     
-    print(paste("running ENMevaluate n=",n_occs, "feature class", fc, " partitions", partitioning_alg))
+    print(paste("running ENMevaluate n=", n_occs, "feature class", featureClass, " partitions", partitioning_alg))
     e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
                           algorithm = 'maxent.jar', partitions = partitioning_alg,
                           tune.args = list(fc = featureClass, rm = 1))
