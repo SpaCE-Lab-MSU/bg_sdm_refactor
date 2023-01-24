@@ -95,6 +95,13 @@ To run the model code you must
 1. edit the file `.Renviron` and change the path for the 'base_path' to match where the data is
     1. current location on the MSU HPCC is /mnt/research/plz-lab/DATA/bg_geodiversity
     1. if mounted on your computer use /Volumes/plz-lab/DATA/bg_geodiversity or ? for PC
+    ```bash
+    SDM_BASE_PATH="base folder for all data"
+    HPCC_BASE_PATH="optional alternate base folder just for HPCC"
+    SDM_ENVS_PATH="environmental_variables" # subdir for env
+    SDM_OCCS_PATH_TEMPLATE='occurrence_records/%s_thinned_full'
+    SDM_OCCS_FILE_TEMPLATE='%s_thinned_wallace.csv' # single quoted
+    ```
 1. Restart R if necessary to re-read the changes in `.Renviron`
 
 
