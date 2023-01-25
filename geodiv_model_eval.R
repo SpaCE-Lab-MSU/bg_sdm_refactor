@@ -266,7 +266,7 @@ bg_sampling <- function(occs, envs, species){
 }
 
 #' gather params, create bg sample and create ENM Evaluation
-run_model <- function(occs, envs, species){
+run_model <- function(occs, envs, species,nCores=NULL){
 
   # save number of occurrences for setting params
   n_occs <- nrow(occs)
@@ -310,12 +310,19 @@ run_model <- function(occs, envs, species){
     ##RUN 1
     #Need to use Maxent.jar because of the ability to see perm importance
     #will have to store maxent jar file on HPC? Maxent uses this file to run.
-    
-    print(paste("running ENMevaluate n=", n_occs, "feature class", featureClass, " partitions", partitioning_alg))
-    e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
-                          algorithm = 'maxent.jar', partitions = partitioning_alg,
-                          tune.args = list(fc = featureClass, rm = 1))
 
+    print(paste("running ENMevaluate n=", n_occs, "feature class", featureClass, " partitions", partitioning_alg))
+    
+    # if(is.null(nCores) || nCores == "" || is.na(nCores)){
+    e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
+                                   algorithm = 'maxent.jar', partitions = partitioning_alg,
+                                   tune.args = list(fc = featureClass, rm = 1),
+                                   parallel = TRUE, numCores = nCores)      
+    # } else {
+    #    e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
+    #                       algorithm = 'maxent.jar', partitions = partitioning_alg,
+    #                       tune.args = list(fc = featureClass, rm = 1))
+    # }
     return(e.mx)
 }
 

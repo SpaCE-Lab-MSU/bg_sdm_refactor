@@ -25,6 +25,9 @@ if (sys.nframe() == 0){
   
   print(args)
   
+  # TODO use argparse for named arguments rather than positional
+  # for more flex and to reduce errors
+  
   # test if there are enough arguments: if not, return an error
   if (length(args) < 4) {
     stop(usage, call.=FALSE)
@@ -40,15 +43,22 @@ if (sys.nframe() == 0){
   
   
   # TODO don't just rely on env variables for other paths/templates.  allow additional args
-  # for example
-  # if(length(args > 5)) {
-  #   baseBath = sdmBasePath(args[5])
-  # } # else check for env variable here to make sure it 's set
-  # 
+  
+  # number of cores to limit to
+  if(length(args > 5)) { nCores <- args[5] } else {nCores <- NULL}
   
   
-  # don't save just yet
-  e.mx <- sdm_read_and_run(species=species, radiusKm = radiusKm, runNumber = runNumber, outputPath = NULL)
+  
+  envs <- read_envs(radius = radiusKm)
+  
+  # read and process occurrences
+  occs <- read_occs(species)
+  occs <- process_occs(occs, envs)
+  
+  
+  
+  # run model
+  e.mx <- run_model(occs=occs, envs=envs, species=species,nCores=nCores)
   
   # TODO check for validity in e.mx
   
