@@ -48,6 +48,6 @@ export R_LIBS_USER=$HOME/R/$RVER
 
 for RADIUS in "${RADII[@]}";do
   Rscript --no-save  --no-init-file --no-restore  \
-  sdm_run.R $SPECIES $RADIUS $RUN_NUMBER /tmp/billspat/test_output_Alouatta_palliata \
+  sdm_run.R $SPECIES $RADIUS $RUN_NUMBER $OUTPUT_PATH \
   $SLURM_JOB_CPUS_PER_NODE
 done  
