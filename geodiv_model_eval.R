@@ -268,16 +268,12 @@ bg_sampling <- function(occs, envs, species){
 #' gather params, create bg sample and create ENM Evaluation
 run_model <- function(occs, envs, species){
 
+  # save number of occurrences for setting params
   n_occs <- nrow(occs)
   
-  # Model parameters based on occurrence record #s
-  # Conditional settings for feature classes
-  # LQH >= 15
-  # LQ between 10 -14
-  # L < 10
-  # 
+  # feature classes based on n occurrence records 
+  # LQH >= 15; LQ between 10 -14; L < 10
   
-
   # feature classes as vector (array)  
   # featureClass = c("L")
   # 
