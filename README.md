@@ -63,11 +63,16 @@ Terra says it requires:  C++11, GDAL (>= 2.2.3), GEOS (>= 3.4.0), PROJ (>= 4.9.3
  - dismo
  - [ENMeval](https://jamiemkass.github.io/ENMeval/index.html)
  - wallace
- - Maxent Java jar file,latest version avaiable for download on https://biodiversityinformatics.amnh.org/open_source/maxent/  
+ - Maxent Java jar file
+    - installing `dismo` seems to also install this file in the correct place. 
+    - alternative method: the latest version avaiable for download on https://biodiversityinformatics.amnh.org/open_source/maxent/  
      - ENMeval does not seem to have directions for installing this, but see this post: https://stackoverflow.com/questions/44813048/maxent-rjava-situation-1001
      - the download above will download a zip file.  Unzip teh file and find the `maxent.jar` file inside the zip folder.   
   
-Test that you can use Java properly in R
+
+**Test that you can use Java properly in R**
+
+On the MSU HPCC you have to make sure you've loaded R and a compatible version of Java. 
 
 In the R console: 
 
