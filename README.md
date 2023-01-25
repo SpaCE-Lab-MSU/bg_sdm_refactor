@@ -64,11 +64,28 @@ Terra says it requires:  C++11, GDAL (>= 2.2.3), GEOS (>= 3.4.0), PROJ (>= 4.9.3
  - [ENMeval](https://jamiemkass.github.io/ENMeval/index.html)
  - wallace
  - Maxent Java jar file
-    - installing `dismo` seems to also install this file in the correct place. 
-    - alternative method: the latest version avaiable for download on https://biodiversityinformatics.amnh.org/open_source/maxent/  
-     - ENMeval does not seem to have directions for installing this, but see this post: https://stackoverflow.com/questions/44813048/maxent-rjava-situation-1001
-     - the download above will download a zip file.  Unzip teh file and find the `maxent.jar` file inside the zip folder.   
+    - installing `dismo` seems to also install this file in the correct place, so no further action seems necessary.  However if you have trouble running maxent.jar, try this alternative method that also worked for me: 
+        - the latest version available for download on https://biodiversityinformatics.amnh.org/open_source/maxent/  
+        - ENMeval does not seem to have directions for installing this, but see this post: https://stackoverflow.com/questions/44813048/maxent-rjava-situation-1001
+        - the download above will download a zip file.  Unzip the file and find the `maxent.jar` file inside the zip folder.   
   
+
+Note, you may see the error
+
+```
+Error in x$.self$finalize() : attempt to apply non-function
+Error in (function (x)  : attempt to apply non-function
+```
+
+
+
+based on a [message from Rober Hijmans on stack overflow](https://stackoverflow.com/questions/65556253/r-raster-selffinalize-error-causing-failure), you can get rid of these 
+
+> These annoying messages Will disappear with the next release of Rcpp, which is planned for 
+> Jan 2023. You can also install the development version of Rcpp like this:
+
+`install.packages("Rcpp", repos="https://rcppcore.github.io/drat")`
+
 
 **Test that you can use Java properly in R**
 
@@ -130,5 +147,19 @@ source('tests/test_model_run.R')
 this will additionalling save the output from the model in an Rdata file for re-reading into R
 
 The output files of the test script are save to a temp folder that is removed when you quit R/Rstudio
-    
+
+### Running 
+
+The script `sdm_run.R` takes following cli parameter
+
+  `Rscript sdm_run.R Genus_species radiuskm [default 1] runNumber [default 1] output_path` 
+  
+  outputPath is full path to output
+
+  
+Example
+
+`Rscript sdm_run.R Alouatta_palliata 1 1 /tmp/output_Alouatta_palliata`
+
+
 
