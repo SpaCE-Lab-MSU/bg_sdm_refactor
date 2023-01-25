@@ -320,6 +320,11 @@ run_model <- function(occs, envs, species){
 }
 
 #' write components of ENMevaluation to disk
+#' e.mx output from ENMevaluate
+#' species Genus_species used for file naming
+#' radiusKm integer used for file naming
+#' runNumber used for file naming
+#' outputPath full or relative path to cwd (not to base path)
 save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
 
     print(paste("saving model output to ", outputPath))
