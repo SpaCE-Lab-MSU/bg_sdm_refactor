@@ -1,6 +1,7 @@
 
 
-SDM_SPECIES_LIST=$(for f in `ls /mnt/research/plz-lab/DATA/neotropical_frugivores/andes_geodiv/occurrence_records/*.csv`; do f=`basename $f`; echo "${f%.csv}" ; done)
+OCCURRENCE_DATA_DIR="/mnt/research/plz-lab/DATA/neotropical_frugivores/andes_geodiv/occurrence_records"
+SDM_SPECIES_LIST=$(for f in `ls $OCCURRENCE_DATA_DIR/*.csv`; do f=`basename $f`; echo "${f%.csv}" ; done)
 
 for SDM_SPECIES in $SDM_SPECIES_LIST; do
 
