@@ -17,7 +17,7 @@
 
 
 # ensure libs are available 
-require(raster)
+require(terra)
 require(ENMeval) 
 require(wallace)
 require(rJava)
