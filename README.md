@@ -152,14 +152,18 @@ The output files of the test script are save to a temp folder that is removed wh
 
 The script `sdm_run.R` takes following cli parameter
 
-  `Rscript sdm_run.R Genus_species radiuskm [default 1] runNumber [default 1] output_path` 
+  `Rscript --no-restore sdm_run.R Genus_species radiuskm [default 1] runNumber [default 1] output_path` 
   
   outputPath is full path to output
 
   
 Example
 
-`Rscript sdm_run.R Alouatta_palliata 1 1 /tmp/output_Alouatta_palliata`
+`Rscript --no-restore sdm_run.R Alouatta_palliata 1 1 /tmp/output_Alouatta_palliata`
+
+
+*Note: the `--no-restore` option will avoid re-loading any variables or objects you've saved from your interactive R/Rstudio session.  Do not use the --vanilla option as it will not load the environment which the current script depends upon*
+
 
 
 
