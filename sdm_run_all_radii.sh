@@ -6,12 +6,12 @@
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=6gb
 #SBARCH --constraint="amd20\|intel18"
-#SBATCH --output=myjob.sb.o%j
-#SBATCH --error=myjob.sb.e%j
 #SBATCH --array=1
+#SBATCH --output %x-%a-output-%j.txt
+#SBATCH --error %x-%a-error-%j.txt
 
 # 
-# usage: sbatch --array=1-5 --export=SDM_SPECIES=Tremarto_ornatu,SDM_OUTPUT_PATH=/mnt/research/myspace/output  sdm_run_all_radii.sh
+# usage: sbatch --array=1-5 --export=SDM_SPECIES=Tremarto_ornatus,SDM_OUTPUT_PATH=`pwd`/test_output  sdm_run_all_radii.sh
 
 # notes: 
 #  this script runs all radii and multiple replicates (run number) for a single species
@@ -19,7 +19,7 @@
 #  --export is used to set those environment variables when you start the job.  
 #  could also set those variables in your shell, then use --export=ALL
 #  you could write a bash for loop to read the occurrence data folders to  submit jobs for each species folder
-#  this is an array job but for safety, by default only runs 1 job; use the CLI param --array to set more runs
+#  this is an array job but for safety, by default only runs 1 job; use the sparam --array to set more runs
 
 # the .Renviron in this folder needs to set the following variables used by the script
 # export SDM_BASE_PATH="/mnt/scratch/billspat/neotropical_frugivores/andes_geodiv"
@@ -40,6 +40,11 @@ RUN_NUMBER="${SLURM_ARRAY_TASK_ID:-1}"
 OUTPUT_PATH="${SDM_OUTPUT_PATH:-$HOME/sdm_model_runs}"
 
 RADII=( 1 3 9 15 21 27 33 )
+
+module purge
+module load GCC/11.2.0  OpenMPI/4.1.1 GDAL R automake udunits
+export RVER="4.2.2-GCC-11.2.0"
+export R_LIBS_USER=$HOME/R/$RVER
 
 for RADIUS in "${RADII[@]}";do
   Rscript --no-save  --no-init-file --no-restore  \

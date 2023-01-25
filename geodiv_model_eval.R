@@ -317,7 +317,7 @@ run_model <- function(occs, envs, species,nCores=NULL){
     e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
                                    algorithm = 'maxent.jar', partitions = partitioning_alg,
                                    tune.args = list(fc = featureClass, rm = 1),
-                                   parallel = TRUE, numCores = nCores)      
+                                   numCores = nCores)      
     # } else {
     #    e.mx <- ENMeval::ENMevaluate(occs = occs_ll, envs = envs_cropped, bg = bgData$bgSample,
     #                       algorithm = 'maxent.jar', partitions = partitioning_alg,
