@@ -323,7 +323,9 @@ run_model <- function(occs, envs, species){
 save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
 
     print(paste("saving model output to ", outputPath))
-    
+
+    if(! file.exists(outputPath)){ dir.create(outputPath, recursive=TRUE) }
+  
     e.mx.results <- e.mx@results
     # "a_palliata_ENMeval_1x_results.1.run1.csv"
     results.Filename = paste0(species, "_ENMeval_1x_results.",radiusKm,"_run",runNumber,".csv")
