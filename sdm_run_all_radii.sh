@@ -1,14 +1,14 @@
 #!/bin/bash
 
-#SBATCH --time=01:00:00
+#SBATCH --time=04:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=10
-#SBATCH --mem=6gb
-#SBARCH --constraint="amd20\|intel18"
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32gb
+#SBARCH --constraint="NOAUTO:amd20\|intel18"
 #SBATCH --array=1
-#SBATCH --output %x-%a-output-%j.txt
-#SBATCH --error %x-%a-error-%j.txt
+#SBATCH --output joboutput/%x-%a-output-%j.txt
+#SBATCH --error joboutput/%x-%a-error-%j.txt
 
 # 
 # usage: sbatch --array=1-5 --export=SDM_SPECIES=Tremarto_ornatus,SDM_OUTPUT_PATH=`pwd`/test_output  sdm_run_all_radii.sh
@@ -32,7 +32,7 @@
 
 
 # time: 7 radii * 5 runs; 5 minutes per run; => time =~ 3 hrs
-# memory: 4gb per process X 20 process = 80gb
+# memory: 4gb per process X cpus-per-task
 
 # use env variables, but use defaults if they are not set
 SPECIES="${SDM_SPECIES:-Alouatta_palliata}"
