@@ -268,28 +268,26 @@ bg_sampling <- function(occs, envs, species){
 #' gather params, create bg sample and create ENM Evaluation
 run_model <- function(occs, envs, species,nCores=NULL){
 
-  # save number of occurrences for setting params
-  n_occs <- nrow(occs)
+   # save number of occurrences for setting params
+   n_occs <- nrow(occs)
   
-  # feature classes based on n occurrence records 
-  # LQH >= 15; LQ between 10 -14; L < 10
+   # previously, feature classes based on n occurrence records 
+   # LQH >= 15; LQ between 10 -14; L < 10
+   ## feature class as string of letters
+   #featureClass <- "L"
+   #if(n_occs > 10 ){ featureClass <- paste0(featureClass, "Q") }
+   #if(n_occs >=15 ){ featureClass <- paste0(featureClass, "H") }
   
-  # feature classes as vector (array)  
-  # featureClass = c("L")
-  # 
-  # if(n_occs > 10 ){ featureClass <- c(featureClass, "Q") }
-  # 
-  # if(n_occs >=15 ){ featureClass <- c(featureClass, "H") }
-    
-  # feature class as string of letters
-  featureClass = "L"
-  if(n_occs > 10 ){ featureClass <- paste0(featureClass, "Q") }
-  if(n_occs >=15 ){ featureClass <- paste0(featureClass, "H") }
-  
-  # 
-  # Conditional settings for cross validation
-  # Jackknife for <= 25
-  # Random K-fold > 25
+
+   # Now just using static feature class for all data, but saving the code above  
+   # in case we change our minds again
+
+   featureClass <- "LQ"
+
+   # 
+   # Conditional settings for cross validation
+   # Jackknife for <= 25
+   # Random K-fold > 25
   
   
     partitioning_cutoff <- 25 
@@ -299,7 +297,6 @@ run_model <- function(occs, envs, species,nCores=NULL){
     else {                  
         partitioning_alg <- 'randomkfold' }
   
-
 
     bgData <- bg_sampling(occs, envs, species)
     #generate full prediction extent for input into 'envs'
@@ -325,6 +322,7 @@ run_model <- function(occs, envs, species,nCores=NULL){
     # }
     return(e.mx)
 }
+
 
 #' write components of ENMevaluation to disk
 #' e.mx output from ENMevaluate
