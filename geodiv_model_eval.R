@@ -324,6 +324,13 @@ run_model <- function(occs, envs, species,nCores=NULL){
 }
 
 
+#' add identifying columns to enable aggregation of results
+#' 
+addGroupCols<- function(df, species, radiusKm, runNumber){
+  new_df <- data.frame("species"=species, "radiuskm"=radiusKm, "rep" = runNumber)
+  return(new_df)
+}
+
 #' write components of ENMevaluation to disk
 #' e.mx output from ENMevaluate
 #' species Genus_species used for file naming
@@ -334,44 +341,44 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
 
     print(paste("saving model output to ", outputPath))
 
+  
     if(! file.exists(outputPath)){ dir.create(outputPath, recursive=TRUE) }
   
     e.mx.results <- e.mx@results
+    
+  
     # "a_palliata_ENMeval_1x_results.1.run1.csv"
     results.Filename = paste0(species, "_ENMeval_1x_results.",radiusKm,"_run",runNumber,".csv")
-    write.csv(e.mx.results, file=file.path(outputPath, results.Filename))
-
+    write.csv(addGroupCols(e.mx.results,species, radiusKm, runNumber), 
+              file=file.path(outputPath, results.Filename))
+    
     # minimize AICc
     # evaluated the AICc within 2 delta units
     minAIC <- e.mx.results[which(e.mx.results$delta.AICc <= 2),] #Make sure the column is delta.AICc
     minAIC.Filename <- paste0(species, "_min_AIC_em.x.", radiusKm, "_run",runNumber,".csv")
     # NOTE this file name is changed from original model_evaluation script to accommodate radius and run number
-    write.csv(minAIC,file=file.path(outputPath, minAIC.Filename))
+    write.csv(addGroupCols(minAIC,species, radiusKm, runNumber),
+              file=file.path(outputPath, minAIC.Filename))
 
 
     #Generate table of performance stats
     e.mx.stats <- e.mx.results[c("auc.train","cbi.train")]
     stats.Filename <- paste0(species, "_stats_e.mx.",radiusKm, "_run", runNumber,".csv")
     # "a_palliata_stats_e.mx.1_run1.csv"
-    write.csv(e.mx.stats, file.path(outputPath, stats.Filename))
+    write.csv(addGroupCols(e.mx.stats,species, radiusKm, runNumber), 
+              file.path(outputPath, stats.Filename))
 
 
-    # TODO : FIX 
-    
     # previous code didn't work because there is not a list item with this name
     # e.mx.var.imp <-e.mx@variable.importance$fc.LQHP_rm.1 --> #"a_palliata_permutation_imp_e.mx.1.run1.csv"
     # variable importance table, names are fc.Q_rm.1, fc.H_rm.1, etc.  there is no fc.LQHP_rm.1
     # loop through the fc names and save each as a CSV
     for(fcName in names(e.mx@variable.importance)) {
       varimp.Filename <- paste0(species, "_imp_e.mx_", fcName, "_",radiusKm, "_run", runNumber,".csv")  
-      write.csv(e.mx@variable.importance[[fcName]], file = file.path(outputPath, varimp.Filename))
+      write.csv(addGroupCols(e.mx@variable.importance[[fcName]],species, radiusKm, runNumber), 
+                file = file.path(outputPath, varimp.Filename))
     }
     
-
-    
-
-    #write prediction to file
-    # filename="e.mx.1.pred.run1.tif"
   
     # loop through the fc names of the layers and save each as a raster
     for(layerName in names(e.mx@predictions)) {
