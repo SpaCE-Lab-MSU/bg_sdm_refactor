@@ -35,7 +35,13 @@
 # memory: 4gb per process X cpus-per-task
 
 # use env variables, but use defaults if they are not set
-SPECIES="${SDM_SPECIES:-Alouatta_palliata}"
+
+# require the env variable SDM_SPECIES to be set
+if [ -z "$SDM_SPECIES" ]; then 
+  echo "the var SDM_SPECIES is not set, exiting" 
+  exit 1
+fi 
+
 RUN_NUMBER="${SLURM_ARRAY_TASK_ID:-1}"
 OUTPUT_PATH="${SDM_OUTPUT_PATH:-$HOME/sdm_model_runs}"
 
@@ -48,6 +54,6 @@ export R_LIBS_USER=$HOME/R/$RVER
 
 for RADIUS in "${RADII[@]}";do
   Rscript --no-save  --no-init-file --no-restore  \
-  sdm_run.R $SPECIES $RADIUS $RUN_NUMBER $OUTPUT_PATH \
+  sdm_run.R $SDM_SPECIES $RADIUS $RUN_NUMBER $OUTPUT_PATH \
   $SLURM_JOB_CPUS_PER_NODE
 done  
