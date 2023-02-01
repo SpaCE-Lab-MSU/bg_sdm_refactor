@@ -324,10 +324,10 @@ run_model <- function(occs, envs, species,nCores=NULL){
 }
 
 
-#' add identifying columns to enable aggregation of results
+#' add identifying columns to dataframe enable aggregation of results
 #' 
 addGroupCols<- function(df, species, radiusKm, runNumber){
-  new_df <- data.frame("species"=species, "radiuskm"=radiusKm, "rep" = runNumber)
+  new_df <- data.frame("species"=species, "radiuskm"=radiusKm, "rep" = runNumber, df)
   return(new_df)
 }
 
