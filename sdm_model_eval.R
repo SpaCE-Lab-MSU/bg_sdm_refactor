@@ -396,17 +396,16 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
 #' read in one type of output CSV for all species, radii and reps. 
 #' assumes/requires that there are subdirs for each speciese.g. /mnt/.../myoutput/+
 readModelOutputs <-function(outputType="aic",  outputPath){
-  
   # get all species
   
   df = NULL
   fileMatchPattern = paste0(".*",outputType,".*\\.csv")
   for(speciesDir in list.files(outputPath)){
-    f = list.files(path = speciesDir, pattern = fileMatchPattern )
+    f = list.files(path = file.path(outputPath,speciesDir), pattern = fileMatchPattern )
     if(is.null(df)){
-      df = read.csv(f,make.row.names= FALSE, stringsAsFactors = FALSE)
+      df = read.csv(f,stringsAsFactors = FALSE)
     } else
-      df = rbind(df, read.csv(f), make.row.names= FALSE, stringsAsFactors = FALSE)
+      df = rbind(df, read.csv(f), stringsAsFactors = FALSE)
       
     
   }

@@ -17,7 +17,7 @@
 # runs only when script is run by itself e.g from Rscript
 # uses the 
 if (sys.nframe() == 0){
-  source('geodiv_model_eval.R')
+  source('sdm_model_eval.R')
   usage <- "Rscript --vanilla sdm_run.R <Genus_species> <radiuskm[default 1]> <number of runs[default 1]> output_path full path to output)"
   help <- "set OS env variables SDM_BASE_PATH to main folder with data and SDM_ENVS_PATH to sub folder where rasters are"               
   
