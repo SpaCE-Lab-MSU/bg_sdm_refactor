@@ -4,7 +4,7 @@ This is a temporary repository to hold modified scripts.
 
 The original code is from Beth Gerstner's GeoDiv repository : https://github.com/bgerstner90/geodiv
 
-The file `geodiv_model_eval.R` is a refactor of [chapter_1 test_model_evaluation.R](https://github.com/bgerstner90/geodiv/blob/master/chapter_1/rcode/test_model_evaluation.R#L91)
+The file `sdm_model_eval.R` is a refactor of [chapter_1 test_model_evaluation.R](https://github.com/bgerstner90/geodiv/blob/master/chapter_1/rcode/test_model_evaluation.R#L91)
 
 ### Status
 
@@ -134,13 +134,13 @@ There are unit tests for functions in the `/tests` folder.  To run the tests :
 
 1. install the testing package `install.packages('testthat')`
 1. ensure the .Renviron file has the correct BASE_PATH set ( for my laptop, after mounting HPC drive this is `BASE_PATH="/Volumes/plz-lab/DATA/bg_geodiversity"` )
-1. in the R console, use `testthat::test_file('tests/test_geodiv_model_eval.R')` or in Rstudio, open the file [tests/test_geodiv_model_eval.R] and click 'run tests' at the top. 
+1. in the R console, use `testthat::test_file('tests/test_sdm_model_eval.R')` or in Rstudio, open the file [tests/test_sdm_model_eval.R] and click 'run tests' at the top. 
 1. if the data files are not accessible to the program there will many errors
 
 To do a test run of the model, the `testthat` package doesn't work so great (it hides the output ), but there is a test script to try.  It's a bit ragged for will using the model run function, save data, and see if the CSVs have rows of data in them:
 
 ```R
-source('geodiv_model_eval.R')
+source('sdm_model_eval.R')
 source('tests/test_model_run.R')
 ```
 

@@ -5,7 +5,7 @@
 # so simply source/run this file to do a test run on the model
 
 # note we need to source the script here since this is not a package
-# source('../geodiv_model_eval.R')
+# source('../sdm_model_eval.R')
 # library(testthat)
 
 # test_that("can run the ENM model with maxent AND save it", {
