@@ -337,18 +337,26 @@ addGroupCols<- function(df, species, radiusKm, runNumber){
 #' radiusKm integer used for file naming
 #' runNumber used for file naming
 #' outputPath full or relative path to cwd (not to base path)
-save_model <- function(e.mx, species, radiusKm, runNumber, outputPath){
+save_model <- function(e.mx, species, radiusKm, runNumber, outputPath ){
 
     print(paste("saving model output to ", outputPath))
 
   
     if(! file.exists(outputPath)){ dir.create(outputPath, recursive=TRUE) }
   
-    e.mx.results <- e.mx@results
-    
-  
+    # save whol results. this may be redundant with the CSVs, but can be useful for plotting
+
+    model.Filename <- paste0(species, "_enmeval_model.",radiusKm,"_km_run",runNumber,".Rdata")
+    save(e.mx, file=file.path(outputPath, model.Filename))
+
+    # plot
+    plot.Filename <- paste0(species, "_enmeval_responsecurevs.",radiusKm,"_km_run",runNumber,".pdf")
+    response_curve_species_radius(e.mx, file.path(outputPath, plot.Filename))    
+
+    # results
+    e.mx.results <- e.mx@results  
     # "a_palliata_ENMeval_1x_results.1.run1.csv"
-    results.Filename = paste0(species, "_ENMeval_1x_results.",radiusKm,"_run",runNumber,".csv")
+    results.Filename = paste0(species, "_enmeval_1x_results.",radiusKm,"_run",runNumber,".csv")
     write.csv(addGroupCols(e.mx.results,species, radiusKm, runNumber), 
               file=file.path(outputPath, results.Filename),
               row.names =FALSE)
@@ -429,6 +437,15 @@ readAllModelOutputs <- function(outputTypes = c("imp","aic","stats","results"), 
   return(outputs)
   
 }
+
+response_curve_species_radius<-function(e.mx, pdfFile=NULL){
+
+   if(! is.null(pdfFile)) { pdf(pdfFile) }
+   dismo::response(e.mx@models[[1]])
+   if(!is.null(pdfFile)) { dev.off() }
+
+}
+
 
 # sdm_read_and_run <- function(species, areaPoly, radiusKm = 1, runNumber = 1, envsDir = NULL,outputPath = NULL){
 #   message(paste("running model for ", species, "radius=", radiusKm, " run number=", runNumber ))
