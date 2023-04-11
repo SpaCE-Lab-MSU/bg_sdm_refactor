@@ -180,14 +180,13 @@ read_occs <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, 
   if(is.null(basePath)) { basePath = sdmBasePath() }
   
   
-  wallaceFriendlyOccsFile = occsDataFilename(species,occsFileNameTemplate)
+  wallaceFriendlyOccsFile =  sprintf("%s_thinned_wallace.csv", species) # occsDataFilename(species,occsFileNameTemplate)
   wallaceFriendlyOccsPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),
                                       wallaceFriendlyOccsFile)
   if(!(file.exists(wallaceFriendlyOccsPath))){
     # can't find the wallace file, so look for the original file 
     # paste0(species,"_thinned_full/",species,"_thinned_thin1.csv")
-    origOccsTemplate ="%s_thinned_thin1.csv"
-    originOccsFileName = sprintf(occsFileNameTemplate, species)
+    originOccsFileName = sprintf("%s_thinned_thin1.csv", species)
 
     origOccsPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),occsDataFilename(species,occsFileNameTemplate))
     # if we can't find the original occs, we have the file path/names wrong and need to stop
