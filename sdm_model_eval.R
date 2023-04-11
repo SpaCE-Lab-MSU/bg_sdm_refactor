@@ -169,6 +169,8 @@ occsDataFilename<-function(species,occsFileNameTemplate  = NULL){
   
 }
 
+
+  
 read_occs <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, basePath = NULL){
   #questionL for txt name why use the file name (a..p..thined ) vs just the species per Wallace documentation https://rdrr.io/cran/wallace/man/occs_userOccs.html
   #occs_path <- "/Volumes/BETH'S DRIV/zarnetske_lab/candidate_species_2022/thinned_data/Alouatta_palliata_thinned_full"
@@ -177,10 +179,32 @@ read_occs <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, 
   # TODO - leave this to the other functions? 
   if(is.null(basePath)) { basePath = sdmBasePath() }
   
+  
+  wallaceFriendlyOccsFile = occsDataFilename(species,occsFileNameTemplate)
+  wallaceFriendlyOccsPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),
+                                      wallaceFriendlyOccsFile)
+  if(!(file.exists(wallaceFriendlyOccsPath))){
+    # can't find the wallace file, so look for the original file 
+    # paste0(species,"_thinned_full/",species,"_thinned_thin1.csv")
+    origOccsTemplate ="%s_thinned_thin1.csv"
+    originOccsFileName = sprintf(occsFileNameTemplate, species)
+
+    origOccsPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),occsDataFilename(species,occsFileNameTemplate))
+    # if we can't find the original occs, we have the file path/names wrong and need to stop
+    stopifnot(file.exists(origOccsPath))
+    
+    # read, change and save data with new file name
+    occs <- read.csv(origOccsPath)
+    names(occs) <- c("scientific_name","longitude","latitude")
+    write.csv(occs,wallaceFriendlyOccsPath)
+    
+    
+  }
   # https://rdrr.io/cran/wallace/man/occs_userOccs.html
   userOccs_sp <- wallace::occs_userOccs(
-    txtPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),occsDataFilename(species,occsFileNameTemplate)),
-    txtName = occsDataFilename(species,occsFileNameTemplate),
+    
+    txtPath = wallaceFriendlyOccs,
+    txtName = wallaceFriendlyOccsFile,
     txtSep = ",",
     txtDec = ".")
   
@@ -447,30 +471,6 @@ response_curve_species_radius<-function(e.mx, pdfFile=NULL){
 }
 
 
-# sdm_read_and_run <- function(species, areaPoly, radiusKm = 1, runNumber = 1, envsDir = NULL,outputPath = NULL){
-#   message(paste("running model for ", species, "radius=", radiusKm, " run number=", runNumber ))
-#   
-#   # read environmental rasters
-#   envs <- read_envs(radius = radiusKm, envsDir = envsDir)
-# 
-# 
-#   # read and process occurrences
-#   occs <- read_occs(species)
-#   occs <- process_occs(occs, envs)
-#     
-#   # run model
-#   e.mx <- run_model(occs, envs, species, partitioning_alg = 'randomkfold')
-#   
-#   # save if a folder was provided
-#   if(! is.null(outputPath)) {
-#     save_model(e.mx, species, radiusKm, runNumber, outputPath )
-#   }
-#   
-#   # return the model for the next step if any
-#   return(e.mx)
-# 
-# }
-
 sdm_read_and_run <- function(species, radiusKm = 1, runNumber = 1, basePath = NULL, envsDir = NULL, occsPathTemplate = NULL, occsFileNameTemplate = NULL, outputPath = NULL){
   message(paste("running model for ", species, "radius=", radiusKm, " run number=", runNumber ))
   
@@ -497,3 +497,35 @@ sdm_read_and_run <- function(species, radiusKm = 1, runNumber = 1, basePath = NU
   return(e.mx)
   
 }
+
+#' threshold rasters in sdm model
+#' 
+#' applies threshold and removes values for raster elements inside model. 
+#' code by Beth Gerstner
+sdm_threshold <- function(sdm, occs, type = "mtp", binary = FALSE){
+  
+  # sdm  = e.mx output from wallace
+  occPredVals <- raster::extract(sdm, occs)
+  if(type == "mtp"){
+    thresh <- min(na.omit(occPredVals))
+  } else if(type == "p10"){
+    if(length(occPredVals) < 10){
+      p10 <- floor(length(occPredVals) * 0.9)
+    } else {
+      p10 <- ceiling(length(occPredVals) * 0.9)
+    }
+    thresh <- rev(sort(occPredVals))[p10]
+  }
+  sdm_thresh <- sdm
+  sdm_thresh[sdm_thresh < thresh] <- NA
+  if(binary){
+    sdm_thresh[sdm_thresh >= thresh] <- 1
+  }
+  
+  return(sdm_thresh)
+}
+
+
+
+
+
