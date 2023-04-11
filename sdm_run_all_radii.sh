@@ -1,16 +1,16 @@
 #!/bin/bash
 
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32gb
-#SBARCH --constraint="NOAUTO:amd20\|intel18""
 #SBATCH --array=1y-3
 #SBATCH --output joboutput/%x-%a-output-%j.txt
 #SBATCH --error joboutput/%x-%a-error-%j.txt
+# #SBARCH --constraint="NOAUTO:amd20\|intel18""
 
-# 
+#
 # usage: sbatch --array=1-5 --export=SDM_SPECIES=Tremarto_ornatus,SDM_OUTPUT_PATH=`pwd`/test_output  sdm_run_all_radii.sh
 
 # notes: 
