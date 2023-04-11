@@ -188,7 +188,8 @@ read_occs <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, 
     # paste0(species,"_thinned_full/",species,"_thinned_thin1.csv")
     originOccsFileName = sprintf("%s_thinned_thin1.csv", species)
 
-    origOccsPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),occsDataFilename(species,occsFileNameTemplate))
+    origOccsPath = file.path(occsDataPath(species, occsPathTemplate, basePath = basePath),
+                             originOccsFileName)
     # if we can't find the original occs, we have the file path/names wrong and need to stop
     stopifnot(file.exists(origOccsPath))
     
