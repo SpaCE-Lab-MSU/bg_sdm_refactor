@@ -203,7 +203,7 @@ read_occs <-function(species, occsPathTemplate=NULL, occsFileNameTemplate=NULL, 
   # https://rdrr.io/cran/wallace/man/occs_userOccs.html
   userOccs_sp <- wallace::occs_userOccs(
     
-    txtPath = wallaceFriendlyOccs,
+    txtPath = wallaceFriendlyOccsPath,
     txtName = wallaceFriendlyOccsFile,
     txtSep = ",",
     txtDec = ".")
