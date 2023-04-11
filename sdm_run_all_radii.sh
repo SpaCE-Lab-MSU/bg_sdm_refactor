@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
@@ -10,8 +10,8 @@
 #SBATCH --output joboutput/%x-%a-output-%j.txt
 #SBATCH --error joboutput/%x-%a-error-%j.txt
 
-# 
-# usage: sbatch --array=1-5 --export=SDM_SPECIES=Tremarto_ornatus,SDM_OUTPUT_PATH=`pwd`/test_output  sdm_run_all_radii.sh
+#
+# usage: sbatch --array=1-3 --export=SDM_SPECIES=Tremarto_ornatus,SDM_OUTPUT_PATH=`pwd`/test_output  sdm_run_all_radii.sh
 
 # notes: 
 #  this script runs all radii and multiple replicates (run number) for a single species
