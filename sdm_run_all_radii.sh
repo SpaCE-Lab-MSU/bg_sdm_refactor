@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32gb
 #SBARCH --constraint="NOAUTO:amd20\|intel18""
-#SBATCH --array=1y-3
+#SBATCH --array=1-3
 #SBATCH --output joboutput/%x-%a-output-%j.txt
 #SBATCH --error joboutput/%x-%a-error-%j.txt
 
