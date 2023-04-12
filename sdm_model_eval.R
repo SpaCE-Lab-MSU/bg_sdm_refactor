@@ -425,7 +425,7 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath ){
   
     # loop through the fc names of the layers and save each as a raster
     for(layerName in names(e.mx@predictions)) {
-      prediction.Filename = paste0(species, "_pred_",layerName, "_", radiusKm, "_run", runNumber,".csv")  
+      prediction.Filename = paste0(species, "_pred_",layerName, "_", radiusKm, "_run", runNumber,".tif")  
       writeRaster(e.mx@predictions[[layerName]], filename=file.path(outputPath, prediction.Filename), format="GTiff", overwrite=T)
     }  
     
@@ -565,8 +565,17 @@ imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
   # take element-wise mean using this one cheap trick (Reduce function is super-fast)
   meanSDM <- Reduce("+",threshedSDMs)/numRuns 
   # generate consistent file name and save as tiff using text 'mean' instead of run number
-  meanSdmFilename <- model.Filename(species,radiusKm,'mean')
-  writeRaster(meanSDM, filename=file.path(outputPath, meanSdmFilename), format="GTiff", overwrite=T)
+  # TODO - this is model file name, NOT a tiff file name
+  
+  sdmFilename = paste0(species, "_sdm_", radiusKm, "_mean.tif")  
+  
+  meanSdmFilename <- file.path(outputPath, species, sdmFilename)
+  result <- writeRaster(meanSDM, filename=meanSdmFilename, format="GTiff", overwrite=T)
+  if(file.exists(meanSdmFilename)){
+    return(meanSdmFilename)
+  } else {
+    return(NA)
+  }
 
 }
 
@@ -577,7 +586,8 @@ imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3){
   # get list of .Rdata files Tremarctos_ornatus_enmeval_model.27_km_run2.Rdata
   # but for now just hard code the radii
   for ( radiusKm in RADII ) {
-    imagePostProcessing(outputPath, species, radiusKm, numRuns = 3)
+    fname <- imagePostProcessing(outputPath, species, radiusKm, numRuns = 3)
+    print(fname)
   }
 }
 
