@@ -556,6 +556,7 @@ imageThresh <- function(runNum, outputPath, species, radiusKm ){
       return(sdm_thresh)
 }
 
+
 #' process SDM layer in e.mx and average across replicates, save result as new tif
 imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
   
@@ -567,5 +568,27 @@ imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
   meanSdmFilename <- model.Filename(species,radiusKm,'mean')
   writeRaster(meanSDM, filename=file.path(outputPath, meanSdmFilename), format="GTiff", overwrite=T)
 
+}
+
+# global configuration setting
+RADII <- c(1,3,9,15,21,27,33)
+
+imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3){
+  # get list of .Rdata files Tremarctos_ornatus_enmeval_model.27_km_run2.Rdata
+  # but for now just hard code the radii
+  for ( radiusKm in RADII ) {
+    imagePostProcessing(outputPath, species, radiusKm, numRuns = 3)
+  }
+}
+
+#' process all SDMs 
+#' 
+#' for all the species (directories in output path), invoke function to process all radii
+#' this is separated so the functions can be tested without running all species, which takes a long time
+imagePostProcessingAllSpecies <- function(outputPath, numRuns = 3){
+  for(speciesDir in list.files(outputPath)){
+    imagePostProcessingAllRadii(outputPath, speciesDir, numRuns = 3)
+  }
+  
 }
 
