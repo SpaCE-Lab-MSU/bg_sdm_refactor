@@ -355,6 +355,13 @@ addGroupCols<- function(df, species, radiusKm, runNumber){
   return(new_df)
 }
 
+#' consistently name RDA files so that can read them in again
+model.Filename <- function(species,radiusKm,runNumber){
+  paste0(species, "_enmeval_model.",radiusKm,"_km_run",runNumber,".Rdata")
+}
+
+
+
 #' write components of ENMevaluation to disk
 #' e.mx output from ENMevaluate
 #' species Genus_species used for file naming
@@ -370,8 +377,8 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath ){
   
     # save whol results. this may be redundant with the CSVs, but can be useful for plotting
 
-    model.Filename <- paste0(species, "_enmeval_model.",radiusKm,"_km_run",runNumber,".Rdata")
-    save(e.mx, file=file.path(outputPath, model.Filename))
+    
+    save(e.mx, file=file.path(outputPath, model.Filename(species,radiusKm,runNumber)))
 
     # plot
     plot.Filename <- paste0(species, "_enmeval_responsecurevs.",radiusKm,"_km_run",runNumber,".pdf")
@@ -424,6 +431,7 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath ){
     
 }
 
+
 #' 
 #' read in one type of output CSV for all species, radii and reps. 
 #' assumes/requires that there are subdirs for each speciese.g. /mnt/.../myoutput/+
@@ -452,7 +460,7 @@ readModelOutputs <-function(outputType="aic",  outputPath){
 #'     listOfOutputs = readAllModelOutputs(outputTypes = c("imp","aic","stats","results"), outputPath)
 #'     summary(listofOutputs[['aic']]) 
 #'     
-readAllModelOutputs <- function(outputTypes = c("imp","aic","stats","results"), outputPath){
+readAllModelOutputs <- function(outputPath, outputTypes = c("imp","aic","stats","results")){
   outputs = List()
   for( outputType in outputTypes){
     outputs[[outputType]] = readModelOutputs(outputType,  outputPath)
@@ -461,6 +469,14 @@ readAllModelOutputs <- function(outputTypes = c("imp","aic","stats","results"), 
   return(outputs)
   
 }
+
+aggregateSDMOutputs <- function(outputPath){
+  outputList <- readAllModelOutputs(outputPath)
+  # get list of common rows e.g. species, etc 
+  # 
+}
+
+
 
 response_curve_species_radius<-function(e.mx, pdfFile=NULL){
 
@@ -498,13 +514,18 @@ sdm_read_and_run <- function(species, radiusKm = 1, runNumber = 1, basePath = NU
   
 }
 
+
+raster_threshold<- function(e.mx){
+  occs <- e.mx@occs
+  
+}
 #' threshold rasters in sdm model
 #' 
 #' applies threshold and removes values for raster elements inside model. 
 #' code by Beth Gerstner
-sdm_threshold <- function(sdm, occs, type = "mtp", binary = FALSE){
+sdmThreshold <- function(sdm, occs, type = "mtp", binary = FALSE){
   
-  # sdm  = e.mx output from wallace
+  # sdm  = e.mx output from wallace?
   occPredVals <- raster::extract(sdm, occs)
   if(type == "mtp"){
     thresh <- min(na.omit(occPredVals))
@@ -526,6 +547,25 @@ sdm_threshold <- function(sdm, occs, type = "mtp", binary = FALSE){
 }
 
 
+#' function wrapper for thresholding, to pull sdm and occs out of  e.mx for use in lapply across runs
+imageThresh <- function(runNum, outputPath, species, radiusKm ){
+      load(file=file.path(outputPath, species,model.Filename(species,radiusKm,runNum)))
+      numOccs = length(e.mx@occs)
+      thresh_type = "mtp" # TODO set type based on num of occs
+      sdm_thresh = sdmThreshold(sdm=e.mx@predictions, occs=e.mx@occs[c("longitude","latitude")], type = thresh_type)
+      return(sdm_thresh)
+}
 
+#' process SDM layer in e.mx and average across replicates, save result as new tif
+imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
+  
+  # create list of thresholded SDMs across all replicates using wrapper function above
+  threshedSDMs <- lapply(1:numRuns, imageThresh, outputPath, species, radiusKm)
+  # take element-wise mean using this one cheap trick (Reduce function is super-fast)
+  meanSDM <- Reduce("+",threshedSDMs)/numRuns 
+  # generate consistent file name and save as tiff using text 'mean' instead of run number
+  meanSdmFilename <- model.Filename(species,radiusKm,'mean')
+  writeRaster(meanSDM, filename=file.path(outputPath, meanSdmFilename), format="GTiff", overwrite=T)
 
+}
 
