@@ -435,23 +435,23 @@ save_model <- function(e.mx, species, radiusKm, runNumber, outputPath ){
 #' 
 #' read in one type of output CSV for all species, radii and reps. 
 #' assumes/requires that there are subdirs for each speciese.g. /mnt/.../myoutput/+
-readModelOutputs <-function(outputType="aic",  outputPath){
-  # get all species
-  
+readModelOutputs <-function(outputType,  outputPath){
+
   df = NULL
   fileMatchPattern = paste0(".*",outputType,".*\\.csv")
   for(speciesDir in list.files(outputPath)){
-    f = list.files(path = file.path(outputPath,speciesDir), pattern = fileMatchPattern )
-    if(is.null(df)){
-      df = read.csv(f,stringsAsFactors = FALSE)
-    } else
-      df = rbind(df, read.csv(f), stringsAsFactors = FALSE)
-    
+    for ( f in list.files(path = file.path(outputPath,speciesDir), pattern = fileMatchPattern )){
+      new_df <- read.csv(file.path(outputPath,speciesDir,f),stringsAsFactors = FALSE)
+      if(is.null(df)){ df <-  new_df } else { df <- rbind(df, new_df) }
+    }
   }
+  
   return(df)
-
+  
 }
 
+# numericCols <- c("auc.diff.avg","auc.diff.sd","auc.val.avg","auc.val.sd","cbi.val.avg","cbi.val.sd")
+# aicOutput_mean <- group_by(df,species, radiuskm) %>% summarise(across(all_of(numericCols), mean))
 #' read and aggregate CSV files with names matching a list of types.  
 #' 
 #' value a list of data frames
@@ -460,22 +460,40 @@ readModelOutputs <-function(outputType="aic",  outputPath){
 #'     listOfOutputs = readAllModelOutputs(outputTypes = c("imp","aic","stats","results"), outputPath)
 #'     summary(listofOutputs[['aic']]) 
 #'     
-readAllModelOutputs <- function(outputPath, outputTypes = c("imp","aic","stats","results")){
-  outputs = List()
+readAllModelOutputs <- function(outputPath,outputTypes = c("imp","AIC","stats","results")){
+  
+  # the different outputs have different numeric columns.  These column names are used by the summarise() method to 
+  # to calculate the mean
+  numeric_vars <- list()
+  numeric_vars[['results']]<- c('auc.train', 'cbi.train', 'auc.diff.avg', 'auc.diff.sd', 'auc.val.avg', 'auc.val.sd', 'cbi.val.avg', 'cbi.val.sd', 'or.10p.avg', 'or.10p.sd', 'or.mtp.avg', 'or.mtp.sd', 'AICc', 'delta.AICc', 'w.AIC', 'ncoef')
+  numeric_vars[['stats']] <- c('auc.train', 'cbi.train')
+  numeric_vars[['imp']]<- c( 'variable', 'percent.contribution', 'permutation.importance')
+  numeric_vars[['AIC']]<- c('auc.train', 'cbi.train', 'auc.diff.avg', 'auc.diff.sd', 'auc.val.avg', 'auc.val.sd', 'cbi.val.avg', 'cbi.val.sd', 'or.10p.avg', 'or.10p.sd', 'or.mtp.avg', 'or.mtp.sd', 'AICc', 'delta.AICc', 'w.AIC', 'ncoef')
+  
+  allOutputs = list()
+  
   for( outputType in outputTypes){
-    outputs[[outputType]] = readModelOutputs(outputType,  outputPath)
+    df <- readModelOutputs(outputType,  outputPath)
+    # calculate the mean of the variables   
+    allOutputs[[outputType]] <- group_by(df,species, radiuskm) %>% summarise(across(all_of( numeric_vars[[outputType]]), mean))
+    outputFileName <- file.path(outputPath, paste0(outputType, "_mean.csv"))
+    # write.csv(outputs[[outputType]],file=outputFileName, row.names=FALSE)
   }
-  
-  return(outputs)
-  
-}
 
-aggregateSDMOutputs <- function(outputPath){
-  outputList <- readAllModelOutputs(outputPath)
-  # get list of common rows e.g. species, etc 
-  # 
-}
+  # now merge them, with is a binar operation so we have to repeat for each type. 
+  # start with the first one
+  mergedOutputs <- allOutputs[[outputTypes[1]]]
+  
+  # merge each of the others into it
+  for(outputType in outputTypes[2:length(outputTypes)]){
+    # baseR version of this - is the output any different or more correct?  
+    # mergedOutputs <- merge(mergedOutputs,allOutputs[[outputType]])
+    
+    mergedOutputs <-   dplyr::left_join(mergedOutputs,allOutputs[[outputType]], by=c('species', 'radiuskm'))
+  }
 
+  return(mergeOutputs)
+}
 
 
 response_curve_species_radius<-function(e.mx, pdfFile=NULL){
