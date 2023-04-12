@@ -551,7 +551,10 @@ sdmThreshold <- function(sdm, occs, type = "mtp", binary = FALSE){
 imageThresh <- function(runNum, outputPath, species, radiusKm ){
       load(file=file.path(outputPath, species,model.Filename(species,radiusKm,runNum)))
       numOccs = length(e.mx@occs)
-      thresh_type = "mtp" # TODO set type based on num of occs
+      if(numOccs >= 25) { 
+        threshtype="p10" } 
+      else { 
+        thresh_type = "mtp" } 
       sdm_thresh = sdmThreshold(sdm=e.mx@predictions, occs=e.mx@occs[c("longitude","latitude")], type = thresh_type)
       return(sdm_thresh)
 }
@@ -596,6 +599,9 @@ imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3){
 #' for all the species (directories in output path), invoke function to process all radii
 #' this is separated so the functions can be tested without running all species, which takes a long time
 imagePostProcessingAllSpecies <- function(outputPath, numRuns = 3){
+  
+  stopifnot(file.exists(outputPath))
+  
   for(speciesDir in list.files(outputPath)){
     imagePostProcessingAllRadii(outputPath, speciesDir, numRuns = 3)
   }
