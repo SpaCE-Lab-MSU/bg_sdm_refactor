@@ -480,39 +480,36 @@ readAllModelOutputs <- function(outputPath,outputTypes = c("imp","AIC","stats","
   
   allOutputs = list()
   
-  for( outputType in c("imp","aic","stats","results")){
+  for( outputType in c("imp","AIC","stats","results")){
     
     df <- readModelOutputs(outputType,  outputPath)
     # there is probably a better way to do this, but I can't get how to use column names as strg vars in group by
     df <- switch(outputType, 
                  results = dplyr::group_by(df, species, radiuskm),
-                 aic = dplyr::group_by(df, species, radiuskm),
+                 AIC = dplyr::group_by(df, species, radiuskm),
                  stats = dplyr::group_by(df, species, radiuskm),
                  imp= dplyr::group_by(df, species, radiuskm, variable)
               )
     
     # calculate the mean of the variables   
     allOutputs[[outputType]] <- dplyr::summarise(df,across(all_of( numeric_vars[[outputType]]), mean))
-                                            
-    
+
     if(writeCSVs == TRUE){
       outputFileName <- file.path(outputPath, paste0(outputType, "_mean.csv"))
-      write.csv(outputs[[outputType]],file=outputFileName, row.names=FALSE)
+      write.csv(allOutputs[[outputType]],file=outputFileName, row.names=FALSE)
     }
   }
 
   # now merge those output types with just one row per (species, radius) combo, merge them 
   # start with the first one
-  mergedOutputs <- allOutputs[["aic"]]
-  
+  mergedOutputs <- allOutputs[["AIC"]]
+
   # merge each of the others into it
   for(outputType in c("stats","results")){
     # baseR version of this - is the output any different or more correct?  
     # mergedOutputs <- merge(mergedOutputs,allOutputs[[outputType]])
     mergedOutputs <-   dplyr::left_join(mergedOutputs,allOutputs[[outputType]], by=c('species', 'radiuskm'))
   }
-
-  # note we did not include IMP because there is a row for each variable, and can't be merged with the others. 
   return(mergedOutputs)
 }
 
