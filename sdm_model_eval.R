@@ -22,6 +22,7 @@ require(ENMeval)
 require(wallace)
 require(rJava)
 require(dismo)
+require(dplyr)
 
 options(java.parameters = c("-XX:+UseConcMarkSweepGC", "-Xmx8192m"))
 
@@ -460,39 +461,59 @@ readModelOutputs <-function(outputType,  outputPath){
 #'     listOfOutputs = readAllModelOutputs(outputTypes = c("imp","aic","stats","results"), outputPath)
 #'     summary(listofOutputs[['aic']]) 
 #'     
-readAllModelOutputs <- function(outputPath,outputTypes = c("imp","AIC","stats","results")){
+readAllModelOutputs <- function(outputPath,outputTypes = c("imp","AIC","stats","results"), writeCSVs=FALSE){
   
   # the different outputs have different numeric columns.  These column names are used by the summarise() method to 
   # to calculate the mean
+  
   numeric_vars <- list()
   numeric_vars[['results']]<- c('auc.train', 'cbi.train', 'auc.diff.avg', 'auc.diff.sd', 'auc.val.avg', 'auc.val.sd', 'cbi.val.avg', 'cbi.val.sd', 'or.10p.avg', 'or.10p.sd', 'or.mtp.avg', 'or.mtp.sd', 'AICc', 'delta.AICc', 'w.AIC', 'ncoef')
   numeric_vars[['stats']] <- c('auc.train', 'cbi.train')
-  numeric_vars[['imp']]<- c( 'variable', 'percent.contribution', 'permutation.importance')
   numeric_vars[['AIC']]<- c('auc.train', 'cbi.train', 'auc.diff.avg', 'auc.diff.sd', 'auc.val.avg', 'auc.val.sd', 'cbi.val.avg', 'cbi.val.sd', 'or.10p.avg', 'or.10p.sd', 'or.mtp.avg', 'or.mtp.sd', 'AICc', 'delta.AICc', 'w.AIC', 'ncoef')
+  numeric_vars[['imp']]<- c( 'percent.contribution', 'permutation.importance')
+  
+  group_vars<- list()
+  group_vars[['results']] <- c('df','species', 'radiuskm')
+  group_vars[['stats']] <- c('df','species', 'radiuskm')
+  group_vars[['AIC']] <- c('df','species', 'radiuskm')
+  group_vars[['imp']] <- c('df','species', 'radiuskm', 'variable')
   
   allOutputs = list()
   
-  for( outputType in outputTypes){
+  for( outputType in c("imp","aic","stats","results")){
+    
     df <- readModelOutputs(outputType,  outputPath)
+    # there is probably a better way to do this, but I can't get how to use column names as strg vars in group by
+    df <- switch(outputType, 
+                 results = dplyr::group_by(df, species, radiuskm),
+                 aic = dplyr::group_by(df, species, radiuskm),
+                 stats = dplyr::group_by(df, species, radiuskm),
+                 imp= dplyr::group_by(df, species, radiuskm, variable)
+              )
+    
     # calculate the mean of the variables   
-    allOutputs[[outputType]] <- group_by(df,species, radiuskm) %>% summarise(across(all_of( numeric_vars[[outputType]]), mean))
-    outputFileName <- file.path(outputPath, paste0(outputType, "_mean.csv"))
-    # write.csv(outputs[[outputType]],file=outputFileName, row.names=FALSE)
+    allOutputs[[outputType]] <- dplyr::summarise(df,across(all_of( numeric_vars[[outputType]]), mean))
+                                            
+    
+    if(writeCSVs == TRUE){
+      outputFileName <- file.path(outputPath, paste0(outputType, "_mean.csv"))
+      write.csv(outputs[[outputType]],file=outputFileName, row.names=FALSE)
+    }
   }
 
-  # now merge them, with is a binar operation so we have to repeat for each type. 
+  # now merge those output types with just one row per (species, radius) combo, merge them 
   # start with the first one
-  mergedOutputs <- allOutputs[[outputTypes[1]]]
+  mergedOutputs <- allOutputs[["aic"]]
   
   # merge each of the others into it
-  for(outputType in outputTypes[2:length(outputTypes)]){
+  for(outputType in c("stats","results")){
     # baseR version of this - is the output any different or more correct?  
     # mergedOutputs <- merge(mergedOutputs,allOutputs[[outputType]])
-    
     mergedOutputs <-   dplyr::left_join(mergedOutputs,allOutputs[[outputType]], by=c('species', 'radiuskm'))
   }
 
-  return(mergeOutputs)
+  # note we did not include IMP because there is a row for each variable, and can't be merged with the others. 
+  return(mergedOutputs)
 }
 
 
