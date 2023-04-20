@@ -15,6 +15,19 @@
 # alternatively if SDM_BASE_PATH is not set, HPCC_BASE_PATH will be used
 # SDM_ENVS_PATH sub path inside SDM_BASE_PATH where the env rasters are
 
+# this script uses the following options set in the environmenmost, although
+# most can be set by function arguments, but if the argument is not set, the function will us Sys.getenv()
+
+# you can set these in Linux using the 'export' command for each, 
+# or for any platform create an .Renviron file in this directory. 
+# see https://cran.r-project.org/web/packages/startup/vignettes/startup-intro.html
+
+# SDM_BASE_PATH
+# SDM_OCCS_PATH sub dir od base path
+# SDM_ENVS_PATH= sub dir of base path
+# sprintf patterns to name these files
+# SDM_OCCS_PATH_TEMPLATE='occurrence_records/%s_thinned_full'
+# SDM_OCCS_FILE_TEMPLATE='%s_thinned_wallace.csv'
 
 # ensure libs are available 
 require(terra)
@@ -26,7 +39,8 @@ require(dplyr)
 
 options(java.parameters = c("-XX:+UseConcMarkSweepGC", "-Xmx8192m"))
 
-
+# global configuration settings
+RADII <- c(1,3,9,15,21,27,33)
 TEST_SPECIES="Alouatta_palliata"
 TEST_RADIUS=1
 
@@ -604,6 +618,19 @@ meanSDM <- function(outputPath, species, radiusKm, numRuns = 3){
   return(meanSDM)
 }
 
+# convenience function that just reads the occurences and counts them.  
+# sometimes we just need the count of occurrences. 
+# this is hear to demonstrate how to do this, and also so you don't have to write it again
+
+numOccs<-function(species, ccsPathTemplate = NULL, occsFileNameTemplate = NULL){
+
+  # counting Occurrences from standard occurrences file path and names
+  # using NULL for templates, then read_occs() will get these values from the Environment  
+  occs <- read_occs(species, occsPathTemplate, occsFileNameTemplate)
+  return( nrow(occs) )
+  
+}
+
 
 #' process SDM layer in e.mx and average across replicates, save result as new tif
 imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
@@ -612,13 +639,6 @@ imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
   # we could just read the tif files too
   speciesRadiusMeanSDM <- meanSDM(outputPath, species, radiusKm, numRuns) 
 
-  # nOccs
-  # TODO find how we do this when we read occs above
-  occsPathTemplate <- ''
-  occsFileNameTemplate <- '' 
-  occs <- read_occs(species, occsPathTemplate, occsFileNameTemplate)
-  numOccs <- nrow(occs)
-  
   if(numOccs >= 25) { 
     threshtype="p10" } 
   else { 
@@ -642,11 +662,11 @@ saveMeanSDM<- function(meanSDM, species, radiusKm, outputPath){
 
 }
 
-# global configuration setting
-RADII <- c(1,3,9,15,21,27,33)
+
 
 imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3, radii = RADII){
 
+  filesGenerated = c()
   # get list of .Rdata files Tremarctos_ornatus_enmeval_model.27_km_run2.Rdata
   # but for now just hard code the radii
   for ( radiusKm in radii ) {
@@ -654,7 +674,11 @@ imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3, radii 
     meanSDM <- imagePostProcessing(outputPath, species, radiusKm, numRuns)
     meanSDMFile <- saveMeanSDM(meanSDM, species, radiusKm, outputPath)
     print(meanSDMFile)
+    filesGenerated = c(filesGenerated, meanSDMFile)
   }
+  
+  return(filesGenerated)
+  
 }
 
 #' process all SDMs 
