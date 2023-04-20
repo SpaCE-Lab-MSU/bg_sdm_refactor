@@ -451,17 +451,7 @@ readModelOutputs <-function(outputType,  outputPath){
   
 }
 
-# numericCols <- c("auc.diff.avg","auc.diff.sd","auc.val.avg","auc.val.sd","cbi.val.avg","cbi.val.sd")
-# aicOutput_mean <- group_by(df,species, radiuskm) %>% summarise(across(all_of(numericCols), mean))
-#' read and aggregate CSV files with names matching a list of types.  
-#' 
-#' value a list of data frames
-#' example, set the output path in the console, and read then all in
-#'     outputPath = '/mnt/research/path/to/speciesfolders'
-#'     listOfOutputs = readAllModelOutputs(outputTypes = c("imp","aic","stats","results"), outputPath)
-#'     summary(listofOutputs[['aic']]) 
-#'     
-readAllModelOutputs <- function(outputPath,outputTypes = c("imp","AIC","stats","results"), writeCSVs=FALSE){
+aggregateModelOutputs <- function(outputPath,outputTypes = c("imp","AIC","stats","results"), writeCSVs=FALSE){
   
   # the different outputs have different numeric columns.  These column names are used by the summarise() method to 
   # to calculate the mean
@@ -551,10 +541,6 @@ sdm_read_and_run <- function(species, radiusKm = 1, runNumber = 1, basePath = NU
 }
 
 
-raster_threshold<- function(e.mx){
-  occs <- e.mx@occs
-  
-}
 #' threshold rasters in sdm model
 #' 
 #' applies threshold and removes values for raster elements inside model. 
@@ -583,29 +569,67 @@ sdmThreshold <- function(sdm, occs, type = "mtp", binary = FALSE){
 }
 
 
-#' function wrapper for thresholding, to pull sdm and occs out of  e.mx for use in lapply across runs
-imageThresh <- function(runNum, outputPath, species, radiusKm ){
-      load(file=file.path(outputPath, species,model.Filename(species,radiusKm,runNum)))
-      numOccs = length(e.mx@occs)
-      if(numOccs >= 25) { 
-        threshtype="p10" } 
-      else { 
-        thresh_type = "mtp" } 
-      sdm_thresh = sdmThreshold(sdm=e.mx@predictions, occs=e.mx@occs[c("longitude","latitude")], type = thresh_type)
-      return(sdm_thresh)
+#' #' function wrapper for thresholding, to pull sdm and occs out of  e.mx for use in lapply across runs
+#' imageThresh <- function(runNum, outputPath, species, radiusKm ){
+#'       load(file=file.path(outputPath, species,model.Filename(species,radiusKm,runNum)))
+#'       numOccs = length(e.mx@occs)
+#'       if(numOccs >= 25) { 
+#'         threshtype="p10" } 
+#'       else { 
+#'         thresh_type = "mtp" } 
+#'       sdm_thresh = sdmThreshold(sdm=e.mx@predictions, occs=e.mx@occs[c("longitude","latitude")], type = thresh_type)
+#'       return(sdm_thresh)
+#' }
+
+# sub-function that loads just one run's sdm, to be used with lapply below
+loadSDM <- funtion(runNum, outputPath, species, radiusKm){
+  rDataFile <- model.Filename(species,radiusKm,runNum)
+  stopifnot(file.exists(rDataFile))
+  load(file=file.path(outputPath, species, rDataFile))
+  # assumes the Wallace model object is called e.mx
+  return(e.mx@predictions)
+}
+
+#' calculate the average SMD values for a Species X radius across runs and return
+#' builds filename to open using model.Filename fn
+meanSDM <- function(outputPath, species, radiusKm, numRuns = 3){
+  
+  # read SDMS for all runs into a list
+  SDMlist <- lapply(1:numRuns, loadSDM, outputPath=outputPath, species=species, radiusKm=radiusKm) 
+  
+  # use the Reduce function on the list to calc the element-wise mean 
+  # assumes all the SMDs are identical dimensions
+  meanSDM <- Reduce("+",SDMlist)/numRuns 
+  
+  return(meanSDM)
 }
 
 
 #' process SDM layer in e.mx and average across replicates, save result as new tif
 imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
   
-  # create list of thresholded SDMs across all replicates using wrapper function above
-  threshedSDMs <- lapply(1:numRuns, imageThresh, outputPath, species, radiusKm)
-  # take element-wise mean using this one cheap trick (Reduce function is super-fast)
-  meanSDM <- Reduce("+",threshedSDMs)/numRuns 
-  # generate consistent file name and save as tiff using text 'mean' instead of run number
-  # TODO - this is model file name, NOT a tiff file name
+  # read saved wallace e.mx models to pull SDMs
+  # we could just read the tif files too
+  speciesRadiusMeanSDM <- meanSDM(outputPath, species, radiusKm, numRuns) 
+
+  # nOccs
+  # TODO find how we do this when we read occs above
+  occsPathTemplate <- ''
+  occsFileNameTemplate <- '' 
+  occs <- read_occs(species, occsPathTemplate, occsFileNameTemplate)
+  numOccs <- nrow(occs)
   
+  if(numOccs >= 25) { 
+    threshtype="p10" } 
+  else { 
+    thresh_type = "mtp" } 
+  
+  sdm_thresh = sdmThreshold(sdm=speciesRadiusMeanSDM, occs=occs, type = thresh_type)
+  return(sdm_thresh)
+
+}
+
+saveMeanSDM<- function(meanSDM, species, radiusKm, outputPath){
   sdmFilename = paste0(species, "_sdm_", radiusKm, "_mean.tif")  
   
   meanSdmFilename <- file.path(outputPath, species, sdmFilename)
@@ -621,12 +645,15 @@ imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
 # global configuration setting
 RADII <- c(1,3,9,15,21,27,33)
 
-imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3){
+imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3, radii = RADII){
+
   # get list of .Rdata files Tremarctos_ornatus_enmeval_model.27_km_run2.Rdata
   # but for now just hard code the radii
-  for ( radiusKm in RADII ) {
-    fname <- imagePostProcessing(outputPath, species, radiusKm, numRuns = 3)
-    print(fname)
+  for ( radiusKm in radii ) {
+    print(paste('processing', species, ", radius=", radiusKM))
+    meanSDM <- imagePostProcessing(outputPath, species, radiusKm, numRuns)
+    meanSDMFile <- saveMeanSDM(meanSDM, species, radiusKm, outputPath)
+    print(meanSDMFile)
   }
 }
 
@@ -638,8 +665,12 @@ imagePostProcessingAllSpecies <- function(outputPath, numRuns = 3){
   
   stopifnot(file.exists(outputPath))
   
-  for(speciesDir in list.files(outputPath)){
-    imagePostProcessingAllRadii(outputPath, speciesDir, numRuns = 3)
+  # get the species names from the subdirs of the output path
+  # each directory in the output from the SDM code above is a species name
+  speciesDirs <- list.dirs(outputPath, full.names =FALSE, recursive=FALSE)
+  
+  for(speciesDir in speciesDirs){
+    imagePostProcessingAllRadii(outputPath, speciesDir, numRuns)
   }
   
 }
