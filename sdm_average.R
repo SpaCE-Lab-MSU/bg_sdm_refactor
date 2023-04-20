@@ -22,7 +22,7 @@ source('sdm_model_eval.R')
 # runs only when script is run by itself e.g from Rscript
 # uses the 
 if (sys.nframe() == 0){
-  usage <- "Rscript --vanilla sdm_run.R <Genus_species> <radiuskm[default 1]> output_path full path to output <optional number of runs[default 3]> )"
+  usage <- "Rscript --vanilla sdm_run.R <Genus_species> <radiuskm[default 1]> <output_path [full path to where species folders are]> <optional number of runs[default 3]> )"
   help <- "set OS env variables SDM_BASE_PATH to main folder with data and SDM_ENVS_PATH to sub folder where rasters are"               
   
   args = commandArgs(trailingOnly= TRUE)
@@ -38,11 +38,10 @@ if (sys.nframe() == 0){
   } else { 
     species   <- args[1] # valid species of form Genus_species to match file names
     radiusKm  <- as.integer(args[2]) # integer matching envs dirs 
-    outputPath<- args[3] # full path of where to save files
+    outputPath<- args[3] # full path of output folder where species sub-folders are
   }
   
-  # send number of runs that were done and to be processed as optional 4 arg
-  # default is 3
+  # send number of runs that were done and to be processed as optional 4th arg, default is 3 runs
   numRuns <- 3
   if (length(args)== 4) 
     numRuns <- as.integer(args[4]) # integer
