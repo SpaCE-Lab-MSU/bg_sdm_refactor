@@ -572,7 +572,10 @@ sdmThreshold <- function(sdm, occs, type = "mtp", binary = FALSE){
       p10 <- ceiling(length(occPredVals) * 0.9)
     }
     thresh <- rev(sort(occPredVals))[p10]
+  } else {
+    stop(paste("sdmThreshold type must be mtp or p10 : ", type))
   }
+  
   sdm_thresh <- sdm
   sdm_thresh[sdm_thresh < thresh] <- NA
   if(binary){
