@@ -30,12 +30,12 @@ run_all_species_sdm() {
 }
 
 post_process_sdm() {
-  export SDM_OUTPUT_PATH="$SDM_BASE_PATH/sdm_output/"
+  source .Renviron
   module purge
   module load GCC/11.2.0  OpenMPI/4.1.1 GDAL R automake udunits
   export RVER="4.2.2-GCC-11.2.0"
   export R_LIBS_USER=$HOME/R/$RVER
-  Rscript --no-save  --no-init-file --no-restore  sdm_average.R $OUTPUT_PATH
+  Rscript --no-save  --no-init-file --no-restore  sdm_average.R $SDM_BASE_PATH/$SDM_OUTPUT_PATH
   # Rscript 
   
 }
