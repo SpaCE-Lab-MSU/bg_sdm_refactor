@@ -144,7 +144,7 @@ source('sdm_model_eval.R')
 source('tests/test_model_run.R')
 ```
 
-this will additionalling save the output from the model in an Rdata file for re-reading into R
+this will save CSVs, GeoTIFF of the SDM, and the output from the model (which contains all the source data, the outputs an the SDM) in an Rdata file for re-reading into R named e.mx
 
 The output files of the test script are save to a temp folder that is removed when you quit R/Rstudio
 
@@ -161,8 +161,43 @@ Example
 
 `Rscript --no-restore sdm_run.R Alouatta_palliata 1 1 /tmp/output_Alouatta_palliata`
 
-
 *Note: the `--no-restore` option will avoid re-loading any variables or objects you've saved from your interactive R/Rstudio session.  Do not use the --vanilla option as it will not load the environment which the current script depends upon*
+
+#### HPC submit script
+
+The HPC job script is `sdm_run_all_radii.sh` and has job parameters for memory and cores that are known to work but may be larger than necessary.  
+
+#### Convenience Shell Scripts for HPC
+
+The R code in this job script needs some environment variables for the location of the occurrences file and species name.  So there is more scripts that set these variables for you and submitting  one or all of the species using an HPC job.  The shell 'script' `start_jobs.sh` are actually shell 'functions' that create commands you can run to launch the HPC jobs and also for post-processing (see below)
+
+To run a single species from this directory
+
+1. review, edit and save the script `start_jobs.sh` and alter the directories as needs to point to the species files. They are currently set for using the HPC folder for the "plz-lab" research group.   
+2. once edits, you can enable the functions by 'sourcing' the script in the terminal. 
+   `source start_jobs.R`
+   
+3. now the shortcut functions are available in your terminal.  
+   - To run one species, use the folder name (with underscore):  `run_one_species_sdm Lagothrix_lagotricha`
+   - to to submit a job for each folder in the occurrences folder set in this script: `run_all_species_sdm`
+   - to run the post-processing after all species models are created, use `post_process_sdm`
+      note this is not a job and will run in the terminal node immediately since it doesn't take much
+   
+#### Post-processing
+
+After the run is done the code is there to 
+
+1. read in the data in the output directory for all species (the naive code assumes that there is a directory for each species, and no non-species directories, so don't create any)
+1. for non-SDM data, aggregate into a single file by averaging across runs, and merging into a single CSV with columns
+keying the data on `species X radius` saved as a new CSV in the output directory
+1. for the variable importance, create a file that combines all those with columns keyed on 
+`species X radius X variable` saved as a new CSV in the output directory
+1. For the SDMs, create an average SDM across runs for each `species X radius`, then threshold the averaged 
+SDM based on the number of occurences  (see code in `sdm_model_eval.R` for details), and save that as a new GeoTIFF
+To create CSVs and SDMs that average across runs and, for SDMs are thresholded.  See function `imagePostProcessingAllRadii()`
+
+   
+
 
 
 
