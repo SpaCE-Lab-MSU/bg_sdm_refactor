@@ -625,14 +625,14 @@ meanSDM <- function(outputPath, species, radiusKm, numRuns = 3){
 # sometimes we just need the count of occurrences. 
 # this is hear to demonstrate how to do this, and also so you don't have to write it again
 
-numOccs<-function(species, ccsPathTemplate = NULL, occsFileNameTemplate = NULL){
-
-  # counting Occurrences from standard occurrences file path and names
-  # using NULL for templates, then read_occs() will get these values from the Environment  
-  occs <- read_occs(species, occsPathTemplate, occsFileNameTemplate)
-  return( nrow(occs) )
-  
-}
+# numOccs<-function(species, occsPathTemplate = NULL, occsFileNameTemplate = NULL){
+# 
+#   # counting Occurrences from standard occurrences file path and names
+#   # using NULL for templates, then read_occs() will get these values from the Environment  
+#   occs <- read_occs(species, occsPathTemplate, occsFileNameTemplate)
+#   return( nrow(occs) )
+#   
+# }
 
 
 #' process SDM layer in e.mx and average across replicates, save result as new tif
@@ -641,7 +641,8 @@ imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
   # read saved wallace e.mx models to pull SDMs
   # we could just read the tif files too
   speciesRadiusMeanSDM <- meanSDM(outputPath, species, radiusKm, numRuns) 
-
+  occs <- read_occs(species) # assumes folder pattern templatesa are stored in .Renviron or other env
+  numOccs <- nrow(occs)
   if(numOccs >= 25) { 
     threshtype="p10" } 
   else { 
