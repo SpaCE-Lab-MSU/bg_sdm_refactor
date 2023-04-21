@@ -674,7 +674,7 @@ imagePostProcessingAllRadii <- function(outputPath, species, numRuns = 3, radii 
   # get list of .Rdata files Tremarctos_ornatus_enmeval_model.27_km_run2.Rdata
   # but for now just hard code the radii
   for ( radiusKm in radii ) {
-    print(paste('processing', species, ", radius=", radiusKM))
+    print(paste('processing', species, ", radius=", radiusKm))
     meanSDM <- imagePostProcessing(outputPath, species, radiusKm, numRuns)
     meanSDMFile <- saveMeanSDM(meanSDM, species, radiusKm, outputPath)
     print(meanSDMFile)
