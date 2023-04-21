@@ -596,7 +596,7 @@ sdmThreshold <- function(sdm, occs, type = "mtp", binary = FALSE){
 #' }
 
 # sub-function that loads just one run's sdm, to be used with lapply below
-loadSDM <- funtion(runNum, outputPath, species, radiusKm){
+loadSDM <- function(runNum, outputPath, species, radiusKm){
   rDataFile <- model.Filename(species,radiusKm,runNum)
   stopifnot(file.exists(rDataFile))
   load(file=file.path(outputPath, species, rDataFile))
