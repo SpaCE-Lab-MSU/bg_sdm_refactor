@@ -600,9 +600,8 @@ sdmThreshold <- function(sdm, occs, type = "mtp", binary = FALSE){
 
 # sub-function that loads just one run's sdm, to be used with lapply below
 loadSDM <- function(runNum, outputPath, species, radiusKm){
-  rDataFile <- model.Filename(species,radiusKm,runNum)
-  stopifnot(file.exists(rDataFile))
-  load(file=file.path(outputPath, species, rDataFile))
+  rDataFile <- file.path(outputPath, species, model.Filename(species,radiusKm,runNum))
+  load(file=rDataFile)
   # assumes the Wallace model object is called e.mx
   return(e.mx@predictions)
 }
