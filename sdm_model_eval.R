@@ -620,18 +620,25 @@ meanSDM <- function(outputPath, species, radiusKm, numRuns = 3){
   return(meanSDM)
 }
 
-# convenience function that just reads the occurences and counts them.  
+# convenience function that just reads the occurrences CSV and counts rows.  
 # sometimes we just need the count of occurrences. 
 # this is hear to demonstrate how to do this, and also so you don't have to write it again
-
-# numOccs<-function(species, occsPathTemplate = NULL, occsFileNameTemplate = NULL){
 # 
-#   # counting Occurrences from standard occurrences file path and names
-#   # using NULL for templates, then read_occs() will get these values from the Environment  
-#   occs <- read_occs(species, occsPathTemplate, occsFileNameTemplate)
-#   return( nrow(occs) )
-#   
-# }
+numOccs<-function(species, occsPathTemplate = NULL, occsFileNameTemplate = NULL){
+
+  # counting Occurrences from standard occurrences file path and names
+  # using NULL for templates, then naming functions will get these values from the Environment
+  # we use these to keep it as flex as possible
+  occsdata <- read.csv(
+                file.path(
+                  occsDataPath(species,occsPathTemplate),
+                  occsDataFilename(species,occsFileNameTemplate)
+                  )
+                )
+  
+  return( nrow(occsdata) )
+
+}
 
 
 #' process SDM layer in e.mx and average across replicates, save result as new tif
@@ -640,14 +647,9 @@ imagePostProcessing<- function(outputPath, species, radiusKm, numRuns = 3){
   # read saved wallace e.mx models to pull SDMs
   # we could just read the tif files too
   speciesRadiusMeanSDM <- meanSDM(outputPath, species, radiusKm, numRuns) 
-  occs <- read_occs(species) # assumes folder pattern templatesa are stored in .Renviron or other env
-  numOccs <- nrow(occs)
-  if(numOccs >= 25) { 
-    threshtype="p10" } 
-  else { 
-    thresh_type = "mtp" } 
-  
-  sdm_thresh = sdmThreshold(sdm=speciesRadiusMeanSDM, occs=occs, type = thresh_type)
+  thresh_type = ifelse(numOccs(species) >= 25, "p10", "mtp" )
+  occs=read_occs(species)
+  sdm_thresh = sdmThreshold(sdm=speciesRadiusMeanSDM, occs = occs[c('longitude','latitude')], type = thresh_type)
   return(sdm_thresh)
 
 }
