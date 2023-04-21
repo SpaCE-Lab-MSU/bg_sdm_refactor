@@ -22,7 +22,7 @@ source('sdm_model_eval.R')
 # runs only when script is run by itself e.g from Rscript
 # uses the 
 if (sys.nframe() == 0){
-  usage <- "Rscript --vanilla sdm_run.R <Genus_species> <radiuskm[default 1]> <output_path [full path to where species folders are]> <optional number of runs[default 3]> )"
+  usage <- "Rscript --vanilla sdm_average.R <output_path [full path to where species folders are]> <optional number of runs[default 3]> )"
   help <- "set OS env variables SDM_BASE_PATH to main folder with data and SDM_ENVS_PATH to sub folder where rasters are"               
   
   args = commandArgs(trailingOnly= TRUE)
@@ -33,26 +33,24 @@ if (sys.nframe() == 0){
   # for more flex and to reduce errors
   
   # test if there are enough arguments: if not, return an error
-  if (length(args) < 3) {
+  if (length(args) < 1) {
     stop(usage, call.=FALSE)
   } else { 
-    species   <- args[1] # valid species of form Genus_species to match file names
-    radiusKm  <- as.integer(args[2]) # integer matching envs dirs 
-    outputPath<- args[3] # full path of output folder where species sub-folders are
+    outputPath<- args[1] # full path of output folder where species sub-folders are
   }
   
   # send number of runs that were done and to be processed as optional 4th arg, default is 3 runs
   numRuns <- 3
-  if (length(args)== 4) 
-    numRuns <- as.integer(args[4]) # integer
+  if (length(args)== 2) 
+    numRuns <- as.integer(args[2]) # integer
 
   # TODO validate all of these args.  for now just assume they are correct
   # TODO don't just rely on env variables for other paths/templates.  allow additional args
   mergedOutputs <- aggregateModelOutputs(outputPath,writeCSVs=TRUE)
   
-  # the function below has the occurence data read built-in, based on standardized file naming and env variables. 
+  # the function below has the occurrence data read built-in, based on standardized file naming and env variables. 
   # it may be better to re-factor the image processing functioning to accept occs as a parameter so you can 
   # test diffenet data types and methods
-  listOfImageFiles <- imagePostProcessingAllRadii(outputPath, species, numRuns)
+  listOfImageFiles <- imagePostProcessingAllSpecies(outputPath, numRuns)
   
 }
