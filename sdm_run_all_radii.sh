@@ -48,7 +48,7 @@ OUTPUT_PATH="${SDM_OUTPUT_PATH:-$HOME/sdm_model_runs}"
 RADII=( 1 3 9 15 21 27 33 )
 
 module purge
-module load GCC/11.2.0  OpenMPI/4.1.1 GDAL R automake udunits
+module load GCC/11.2.0  OpenMPI/4.1.1 GDAL R Automake UDUNITS
 export RVER="4.2.2-GCC-11.2.0"
 export R_LIBS_USER=$HOME/R/$RVER
 
