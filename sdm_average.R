@@ -48,7 +48,7 @@ if (sys.nframe() == 0){
   # TODO don't just rely on env variables for other paths/templates.  allow additional args
   mergedOutputs <- aggregateModelOutputs(outputPath,writeCSVs=TRUE)
   mergeOutputsFileName <- "merged_sdm_outputs.csv" 
-  write.csv(mergedOutputs,file=mergeOutputsFileName, row.names=FALSE)
+  write.csv(mergedOutputs,file=file.path(outputPath,mergeOutputsFileName), row.names=FALSE)
   # the function below has the occurrence data read built-in, based on standardized file naming and env variables. 
   # it may be better to re-factor the image processing functioning to accept occs as a parameter so you can 
   # test diffenet data types and methods
