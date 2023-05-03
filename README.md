@@ -161,7 +161,9 @@ The functions are :
  - post_process_sdm
 
 In bash you just put the arguments after the function name
+
 For these to work
+
 1) the `.Renviron` file must point to the correct data and output directories.  
 2) use the species name with an underscore instead of a space, and must match an existing occurrence data folder
 3) you must have write permission to the output folder.  The job will start but it will fail
@@ -172,12 +174,20 @@ source start_jobs.sh
 run_one_species_sdm Species_name 
 # this starts a job that may take a while
 # repeat for additional species run_one_species_sdm
+```
 
-# after all species SDM jobs are done,
-# update the summary CSV files with...
+The jobs are named with pattern "sdm_Genus_species"  so you can check if the jobs run using the powertool "js" command
+
+`js --name sdm_Genus_species`   for example `js --name sdm_Nasuella_olivacea`
+
+After all species SDM jobs are done, update the summary CSV files with the following.  This doesn't run a job, 
+it runs the Rscript immediately, so takes a while
+
+```
 post_process_sdm 
 
 ```
+
 
 #### Details
 The script `sdm_run.R` takes following cli parameter
