@@ -150,6 +150,36 @@ The output files of the test script are save to a temp folder that is removed wh
 
 ### Running 
 
+#### Quick run
+
+There are bash scripts that submit jobs to run the R scripts to the HPC.   These are scripts that contain bash shell 
+"functions" that you add to your shell environment so you can run them repeatedly.  
+
+The functions are : 
+ - run_one_species_sdm
+ - run_all_species_sdm
+ - post_process_sdm
+
+In bash you just put the arguments after the function name
+For these to work
+1) the `.Renviron` file must point to the correct data and output directories.  
+2) use the species name with an underscore instead of a space, and must match an existing occurrence data folder
+3) you must have write permission to the output folder.  The job will start but it will fail
+
+```
+cd /path/to/scripts
+source start_jobs.sh
+run_one_species_sdm Species_name 
+# this starts a job that may take a while
+# repeat for additional species run_one_species_sdm
+
+# after all species SDM jobs are done,
+# update the summary CSV files with...
+post_process_sdm 
+
+```
+
+#### Details
 The script `sdm_run.R` takes following cli parameter
 
   `Rscript --no-restore sdm_run.R Genus_species radiuskm [default 1] runNumber [default 1] output_path` 
