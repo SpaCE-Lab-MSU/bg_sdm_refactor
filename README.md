@@ -1,8 +1,7 @@
 ## Frugivore DB Geodiv Model - code refactor
 
-This is a temporary repository to hold modified scripts. 
+This was a temporary repository to hold a fork of scripts by Beth Gerstner to support species distribution modelling.  For the final code used for the [publication](https://doi.org/10.1111/geb.13716), see the **Frugivoria** project: https://github.com/bioXgeo/neotropical_frugivores 
 
-The original code is from Beth Gerstner's GeoDiv repository : https://github.com/bgerstner90/geodiv
 
 The file `sdm_model_eval.R` is a refactor of [chapter_1 test_model_evaluation.R](https://github.com/bgerstner90/geodiv/blob/master/chapter_1/rcode/test_model_evaluation.R#L91)
 
